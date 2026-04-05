@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "958235783130",
+    "project_id": "naarya-a12ba",
+    "storage_bucket": "naarya-a12ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:958235783130:android:3a0ae7b30ce5269be41ae3",
+        "android_client_info": {
+          "package_name": "com.naarya.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYjdA4a7LrS9MPJ9tA99ZgVFzncLvAYNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
