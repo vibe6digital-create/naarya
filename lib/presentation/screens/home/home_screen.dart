@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/local_storage_service.dart';
@@ -6,7 +7,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/app_spacing.dart';
 import '../../../core/utils/cycle_phase_calculator.dart';
 import '../../../core/utils/date_utils.dart';
-import '../../widgets/common/naarya_card.dart';
 import '../../widgets/common/section_header.dart';
 import 'widgets/quick_action_card.dart';
 
@@ -26,24 +26,6 @@ class HomeScreen extends StatelessWidget {
   String _getDailyTip() {
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
     return _healthTips[dayOfYear % _healthTips.length];
-  }
-
-  Color _phaseColor(CyclePhase phase) {
-    switch (phase) {
-      case CyclePhase.menstrual:   return AppColors.phaseMenstrual;
-      case CyclePhase.follicular:  return AppColors.phaseFollicular;
-      case CyclePhase.ovulation:   return AppColors.phaseOvulation;
-      case CyclePhase.luteal:      return AppColors.phaseLuteal;
-    }
-  }
-
-  Color _phaseBgColor(CyclePhase phase) {
-    switch (phase) {
-      case CyclePhase.menstrual:   return AppColors.phaseMenstrualBg;
-      case CyclePhase.follicular:  return AppColors.phaseFollicularBg;
-      case CyclePhase.ovulation:   return AppColors.phaseOvulationBg;
-      case CyclePhase.luteal:      return AppColors.phaseLutealBg;
-    }
   }
 
   CyclePhaseInfo? _getCycleInfo() {
@@ -86,13 +68,21 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.sectionGap),
 
               // Main Features
-              const SectionHeader(title: 'Your Health Tools'),
+              SectionHeader(
+                title: 'Your Health Tools',
+                actionText: 'See All',
+                onAction: () {},
+              ),
               const SizedBox(height: AppSpacing.componentGap),
               _buildMainFeatureGrid(context),
               const SizedBox(height: AppSpacing.sectionGap),
 
               // Coming Soon
-              const SectionHeader(title: 'Coming Soon'),
+              SectionHeader(
+                title: 'Coming Soon',
+                actionText: 'Explore All',
+                onAction: () {},
+              ),
               const SizedBox(height: AppSpacing.componentGap),
               _buildComingSoonGrid(context),
               const SizedBox(height: AppSpacing.lg),
@@ -105,126 +95,306 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildGreetingCard(String greeting, String displayName) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: 118,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
+          colors: [Color(0xFFE57BA8), Color(0xFFF8A8C0)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: const Color(0x28D4688A),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Row(
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$greeting, $displayName \u{1F338}',
-                  style: AppTextStyles.h2.copyWith(color: Colors.white),
+          // ── Decorative circles (provide depth for blur) ──
+          Positioned(
+            right: -28,
+            top: -28,
+            child: Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            right: 55,
+            bottom: -25,
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            left: -10,
+            bottom: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+
+          // ── Glassmorphism frosted layer ──
+          Positioned.fill(
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.04),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  AppDateUtils.formatDayMonth(DateTime.now()),
-                  style: AppTextStyles.body2.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+              ),
+            ),
+          ),
+
+          // ── Content ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$greeting, $displayName \u{1F338}',
+                        style: AppTextStyles.h2.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        AppDateUtils.formatDayMonth(DateTime.now()),
+                        style: AppTextStyles.body2.copyWith(
+                          color: Colors.white.withValues(alpha: 0.88),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Glass icon bubble
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.wb_sunny_rounded,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 24),
-          ),
         ],
       ),
     );
+  }
+
+  String _heroTitle(CyclePhaseInfo info) {
+    switch (info.phase) {
+      case CyclePhase.menstrual:   return 'Period';
+      case CyclePhase.follicular:  return 'Next Ovulation';
+      case CyclePhase.ovulation:   return 'Ovulation';
+      case CyclePhase.luteal:      return 'Next Period';
+    }
+  }
+
+  String _heroValue(CyclePhaseInfo info, int cycleLength) {
+    switch (info.phase) {
+      case CyclePhase.menstrual:   return 'Day ${info.dayInCycle}';
+      case CyclePhase.follicular:
+        final ovDay = cycleLength - 14;
+        return '${ovDay - info.dayInCycle} Days Left';
+      case CyclePhase.ovulation:   return 'Fertile Window';
+      case CyclePhase.luteal:      return '${info.daysUntilNextPeriod} Days Left';
+    }
+  }
+
+  String _heroSubtitle(CyclePhaseInfo info) {
+    return 'Next period: ${info.daysUntilNextPeriod} days left';
+  }
+
+  String _fertilityLabel(CyclePhaseInfo info, int cycleLength) {
+    final cycleDay = info.dayInCycle;
+    final ovDay = cycleLength - 14;
+    if (cycleDay == ovDay || (cycleDay - ovDay).abs() <= 1) {
+      return 'High chance of getting pregnant';
+    } else if ((cycleDay - ovDay).abs() <= 4) {
+      return 'Medium chance of getting pregnant';
+    }
+    return 'Low chance of getting pregnant';
+  }
+
+  Color _fertilityBannerColor(CyclePhaseInfo info, int cycleLength) {
+    final cycleDay = info.dayInCycle;
+    final ovDay = cycleLength - 14;
+    if (cycleDay == ovDay || (cycleDay - ovDay).abs() <= 1) {
+      return AppColors.phaseMenstrual;
+    } else if ((cycleDay - ovDay).abs() <= 4) {
+      return AppColors.phaseOvulation;
+    }
+    return AppColors.primary;
   }
 
   Widget _buildCycleSummaryCard(BuildContext context, CyclePhaseInfo cycleInfo) {
-    final phaseColor = _phaseColor(cycleInfo.phase);
-    final phaseBg = _phaseBgColor(cycleInfo.phase);
+    final cycleLength = LocalStorageService.cycleLength;
+    final bannerColor = _fertilityBannerColor(cycleInfo, cycleLength);
 
-    return NaaryaCard(
+    return GestureDetector(
       onTap: () => Navigator.pushNamed(context, AppRoutes.cycleTracker),
-      color: phaseBg,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Cycle Summary',
-                  style: AppTextStyles.subtitle1.copyWith(color: AppColors.textDark)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Container(
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surfaceVariant,
+              AppColors.background,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Stack(
+          children: [
+            // Decorative circles
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: phaseColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
-                ),
-                child: Text(
-                  cycleInfo.phaseName,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: phaseColor,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  color: AppColors.primaryLight.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildCycleStat('Day', '${cycleInfo.dayInCycle}', phaseColor),
-              const SizedBox(width: 24),
-              _buildCycleStat('Next Period', '${cycleInfo.daysUntilNextPeriod} days', phaseColor),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(cycleInfo.phaseDescription,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textBody)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text('View Details',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: phaseColor, fontWeight: FontWeight.w600)),
-              const SizedBox(width: 4),
-              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: phaseColor),
-            ],
-          ),
-        ],
+            ),
+            Positioned(
+              left: -20,
+              bottom: 20,
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+            // Penguin mascot — bottom right
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: Image.asset(
+                'assets/images/penguin.png',
+                width: 90,
+                height: 90,
+                fit: BoxFit.contain,
+              ),
+            ),
+
+            // Main content
+            Column(
+              children: [
+                // Fertility banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  color: bannerColor.withValues(alpha: 0.6),
+                  child: Center(
+                    child: Text(
+                      _fertilityLabel(cycleInfo, cycleLength),
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                // Hero content
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  child: Column(
+                    children: [
+                      Text(
+                        _heroTitle(cycleInfo),
+                        style: AppTextStyles.subtitle2.copyWith(
+                          color: AppColors.textBody,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _heroValue(cycleInfo, cycleLength),
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.display.copyWith(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _heroSubtitle(cycleInfo),
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Edit Period pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Edit Period',
+                          style: AppTextStyles.buttonSmall.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCycleStat(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: AppTextStyles.caption),
-        const SizedBox(height: 2),
-        Text(value,
-            style: AppTextStyles.h3.copyWith(color: color, fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
 
   Widget _buildHealthTipCard() {
     return Container(
@@ -279,80 +449,19 @@ class HomeScreen extends StatelessWidget {
   Widget _buildMainFeatureGrid(BuildContext context) {
     final actions = [
       _QuickAction(
-        icon: Icons.water_drop_rounded,
-        illustrationIcon: Icons.calendar_month_rounded,
-        title: 'Cycle Tracker',
-        subtitle: 'Track your phases',
-        color: AppColors.phaseMenstrual,
-        bgColor: AppColors.phaseMenstrualBg,
-        route: AppRoutes.cycleTracker,
-      ),
-      _QuickAction(
-        icon: Icons.medical_services_rounded,
-        illustrationIcon: Icons.local_hospital_rounded,
-        title: 'Consult Doctor',
-        subtitle: 'Meet our experts',
-        color: AppColors.primary,
-        bgColor: AppColors.primary.withValues(alpha: 0.1),
-        route: AppRoutes.consult,
-      ),
-      _QuickAction(
-        icon: Icons.restaurant_rounded,
-        illustrationIcon: Icons.lunch_dining_rounded,
-        title: 'Nutrition',
-        subtitle: 'Eat well, feel good',
-        color: AppColors.phaseFollicular,
-        bgColor: AppColors.phaseFollicularBg,
-        route: AppRoutes.nutrition,
-      ),
-      _QuickAction(
-        icon: Icons.self_improvement_rounded,
-        illustrationIcon: Icons.directions_run_rounded,
-        title: 'Fitness',
-        subtitle: 'Yoga & workouts',
-        color: AppColors.phaseOvulation,
-        bgColor: AppColors.phaseOvulationBg,
-        route: AppRoutes.fitness,
-      ),
-      _QuickAction(
-        icon: Icons.smart_toy_rounded,
-        illustrationIcon: Icons.psychology_alt_rounded,
-        title: 'AI Assistant',
-        subtitle: 'Chat with Naarya AI',
-        color: AppColors.info,
-        bgColor: AppColors.infoLight,
-        route: AppRoutes.aiChat,
-      ),
-      _QuickAction(
-        icon: Icons.folder_shared_rounded,
-        illustrationIcon: Icons.health_and_safety_rounded,
-        title: 'Health Vault',
-        subtitle: 'Medical records',
-        color: AppColors.phaseLuteal,
-        bgColor: AppColors.phaseLutealBg,
-        route: AppRoutes.healthVault,
-      ),
-      _QuickAction(
-        icon: Icons.child_care_rounded,
-        illustrationIcon: Icons.pregnant_woman_rounded,
-        title: 'Antenatal & Garbh Sanskar',
-        subtitle: 'Expert sessions',
-        color: AppColors.secondary,
-        bgColor: AppColors.secondaryLight,
-        route: AppRoutes.antenatal,
-      ),
-      _QuickAction(
-        icon: Icons.psychology_rounded,
-        illustrationIcon: Icons.spa_rounded,
-        title: 'Mental Fitness',
-        subtitle: 'Mind & Travel wellness',
-        color: const Color(0xFF7B52A8),
-        bgColor: const Color(0xFFEDE7F6),
-        route: AppRoutes.mentalFitness,
+        icon: Icons.notifications_active_rounded,
+        illustrationEmoji: '\u{1F514}',
+        imageUrl: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Reminder',
+        subtitle: 'Never miss a thing',
+        color: const Color(0xFFE57BA8),
+        bgColor: const Color(0xFFFCE4F0),
+        route: AppRoutes.reminders,
       ),
       _QuickAction(
         icon: Icons.note_alt_rounded,
-        illustrationIcon: Icons.edit_note_rounded,
+        illustrationEmoji: '\u{1F4DD}',
+        imageUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=300&h=350&fit=crop&auto=format&q=80',
         title: 'Keep Notes',
         subtitle: 'Tasks & reminders',
         color: const Color(0xFF5C8DBB),
@@ -361,7 +470,8 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.shield_rounded,
-        illustrationIcon: Icons.verified_user_rounded,
+        illustrationEmoji: '\u{1F6E1}\u{FE0F}',
+        imageUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=300&h=350&fit=crop&auto=format&q=80',
         title: 'Safety & Legal',
         subtitle: 'Stay safe, know rights',
         color: AppColors.error,
@@ -369,13 +479,74 @@ class HomeScreen extends StatelessWidget {
         route: AppRoutes.safety,
       ),
       _QuickAction(
-        icon: Icons.shopping_bag_rounded,
-        illustrationIcon: Icons.storefront_rounded,
-        title: 'Products',
-        subtitle: 'Wellness essentials',
-        color: const Color(0xFFE91E8C),
-        bgColor: const Color(0xFFFCE4EC),
-        route: AppRoutes.products,
+        icon: Icons.folder_shared_rounded,
+        illustrationEmoji: '\u{1F5C2}\u{FE0F}',
+        imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Medical Records',
+        subtitle: 'Your health vault',
+        color: AppColors.phaseLuteal,
+        bgColor: AppColors.phaseLutealBg,
+        route: AppRoutes.healthVault,
+      ),
+      _QuickAction(
+        icon: Icons.medical_services_rounded,
+        illustrationEmoji: '\u{1F469}\u{200D}\u{2695}\u{FE0F}',
+        imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Consult Doctor',
+        subtitle: 'Meet our experts',
+        color: AppColors.primary,
+        bgColor: AppColors.primary.withValues(alpha: 0.1),
+        route: AppRoutes.consult,
+      ),
+      _QuickAction(
+        icon: Icons.child_care_rounded,
+        illustrationEmoji: '\u{1F930}',
+        imageUrl: 'https://images.unsplash.com/photo-1556760544-74068565f05c?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Antenatal & Garbh Sanskar',
+        subtitle: 'Expert sessions',
+        color: AppColors.secondary,
+        bgColor: AppColors.secondaryLight,
+        route: AppRoutes.antenatal,
+      ),
+      _QuickAction(
+        icon: Icons.self_improvement_rounded,
+        illustrationEmoji: '\u{1F9D8}\u{200D}\u{2640}\u{FE0F}',
+        imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Physical Fitness',
+        subtitle: 'Yoga & workouts',
+        color: AppColors.phaseOvulation,
+        bgColor: AppColors.phaseOvulationBg,
+        route: AppRoutes.fitness,
+      ),
+      _QuickAction(
+        icon: Icons.psychology_rounded,
+        illustrationEmoji: '\u{1F9E0}',
+        imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Mental Fitness',
+        subtitle: 'Mind & wellness',
+        color: const Color(0xFF7B52A8),
+        bgColor: const Color(0xFFEDE7F6),
+        route: AppRoutes.mentalFitness,
+      ),
+      _QuickAction(
+        icon: Icons.water_drop_rounded,
+        illustrationEmoji: '\u{1FA78}',
+        imageUrl: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Cycle Tracker',
+        subtitle: 'Track your phases',
+        color: AppColors.phaseMenstrual,
+        bgColor: AppColors.phaseMenstrualBg,
+        route: AppRoutes.cycleTracker,
+      ),
+      _QuickAction(
+        icon: Icons.spa_rounded,
+        illustrationEmoji: '\u{1F33F}',
+        imageUrl: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Naturopathy',
+        subtitle: 'Natural healing',
+        color: const Color(0xFF2E7D32),
+        bgColor: const Color(0xFFE8F5E9),
+        route: AppRoutes.naturopathy,
       ),
     ];
 
@@ -393,7 +564,8 @@ class HomeScreen extends StatelessWidget {
         final action = actions[index];
         return QuickActionCard(
           icon: action.icon,
-          illustrationIcon: action.illustrationIcon,
+          illustrationEmoji: action.illustrationEmoji,
+          imageUrl: action.imageUrl,
           title: action.title,
           subtitle: action.subtitle,
           iconColor: action.color,
@@ -408,36 +580,20 @@ class HomeScreen extends StatelessWidget {
     final comingSoon = [
       _QuickAction(
         icon: Icons.biotech_rounded,
-        illustrationIcon: Icons.science_rounded,
-        title: 'Lab Tests',
+        illustrationEmoji: '\u{1F9EA}',
+        imageUrl: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Lab Test',
         subtitle: 'Book at home',
         color: AppColors.textLight,
         bgColor: AppColors.surfaceVariant,
         route: '',
       ),
       _QuickAction(
-        icon: Icons.medication_rounded,
-        illustrationIcon: Icons.local_pharmacy_rounded,
-        title: 'Medicine Order',
-        subtitle: 'Doorstep delivery',
-        color: AppColors.textLight,
-        bgColor: AppColors.surfaceVariant,
-        route: '',
-      ),
-      _QuickAction(
-        icon: Icons.face_retouching_natural_rounded,
-        illustrationIcon: Icons.face_rounded,
-        title: 'Dermatology',
-        subtitle: 'Skin consultation',
-        color: AppColors.textLight,
-        bgColor: AppColors.surfaceVariant,
-        route: '',
-      ),
-      _QuickAction(
-        icon: Icons.spa_rounded,
-        illustrationIcon: Icons.eco_rounded,
-        title: 'Naturopathy',
-        subtitle: 'Natural healing',
+        icon: Icons.shopping_bag_rounded,
+        illustrationEmoji: '\u{1F33A}',
+        imageUrl: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=300&h=350&fit=crop&auto=format&q=80',
+        title: 'Naarya Products',
+        subtitle: 'Wellness essentials',
         color: AppColors.textLight,
         bgColor: AppColors.surfaceVariant,
         route: '',
@@ -458,7 +614,8 @@ class HomeScreen extends StatelessWidget {
         final action = comingSoon[index];
         return QuickActionCard(
           icon: action.icon,
-          illustrationIcon: action.illustrationIcon,
+          illustrationEmoji: action.illustrationEmoji,
+          imageUrl: action.imageUrl,
           title: action.title,
           subtitle: action.subtitle,
           iconColor: action.color,
@@ -472,7 +629,8 @@ class HomeScreen extends StatelessWidget {
 
 class _QuickAction {
   final IconData icon;
-  final IconData? illustrationIcon;
+  final String? illustrationEmoji;
+  final String? imageUrl;
   final String title;
   final String subtitle;
   final Color color;
@@ -481,7 +639,8 @@ class _QuickAction {
 
   const _QuickAction({
     required this.icon,
-    this.illustrationIcon,
+    this.illustrationEmoji,
+    this.imageUrl,
     required this.title,
     required this.subtitle,
     required this.color,

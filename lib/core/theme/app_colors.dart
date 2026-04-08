@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Brand — shifted to pink-rose tone, purple softened
-  static const Color primary = Color(0xFFC2185B);       // deep rose pink
-  static const Color primaryLight = Color(0xFFE91E8C);  // vibrant pink (AI bubbles, accents)
-  static const Color primaryDark = Color(0xFF880E4F);   // dark rose
+  // Brand — soft rose, soothing & light
+  static const Color primary = Color(0xFFD4688A);       // soft rose pink
+  static const Color primaryLight = Color(0xFFF06292);  // light pink (AI bubbles, accents)
+  static const Color primaryDark = Color(0xFFB5446E);   // medium rose
 
   // Backgrounds — blush pink theme
   static const Color background = Color(0xFFFFF5F9);    // blush pink
@@ -49,12 +49,24 @@ class AppColors {
   static const Color phaseLuteal = Color(0xFF7B52A8);   // softened purple
   static const Color phaseLutealBg = Color(0xFFEDE7F6);
 
+  // Cycle Tracker Dark Theme
+  static const Color trackerBg = Color(0xFF1A1028);
+  static const Color trackerSurface = Color(0xFF241535);
+  static const Color trackerPeriod = Color(0xFFC4607C);
+  static const Color trackerToday = Color(0xFF7B6FA2);
+  static const Color trackerPredicted = Color(0xFFE8A0B0);
+  static const Color trackerFertile = Color(0xFFE88CA0);
+  static const Color trackerOvulation = Color(0xFF9B59B6);
+  static const Color trackerTextMuted = Color(0xFF9B8BA0);
+  static const Color trackerBorder = Color(0xFF4D3D5D);
+  static const Color trackerButtonText = Color(0xFFB0A0BC);
+
   // Card shadow
   static const List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Color(0x12C2185B),
-      blurRadius: 12,
-      offset: Offset(0, 2),
+      color: Color(0x10D4688A),
+      blurRadius: 14,
+      offset: Offset(0, 3),
     ),
   ];
 }

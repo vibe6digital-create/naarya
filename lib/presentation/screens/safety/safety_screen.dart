@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/routes/app_routes.dart';
 import '../../../core/services/whatsapp_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -70,13 +69,6 @@ class _SafetyScreenState extends State<SafetyScreen>
   int _fakeCallSecondsLeft = 0;
   bool _fakeCallScheduled = false;
 
-  // Safe route check-in
-  final _destinationController = TextEditingController();
-  TimeOfDay? _etaTime;
-  bool _checkInActive = false;
-  Timer? _checkInTimer;
-  int _checkInSecondsLeft = 0;
-
   // Cycle phase
   CyclePhaseInfo? _cyclePhaseInfo;
 
@@ -114,9 +106,7 @@ class _SafetyScreenState extends State<SafetyScreen>
     _pulseController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
-    _destinationController.dispose();
     _fakeCallTimer?.cancel();
-    _checkInTimer?.cancel();
     super.dispose();
   }
 
@@ -737,220 +727,6 @@ class _SafetyScreenState extends State<SafetyScreen>
     );
   }
 
-  // ─── Safe Route Check-in ──────────────────────────────────────────────
-
-  void _pickETA() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() => _etaTime = picked);
-    }
-  }
-
-  void _startCheckIn() {
-    if (_destinationController.text.trim().isEmpty || _etaTime == null) return;
-
-    final now = TimeOfDay.now();
-    final nowMinutes = now.hour * 60 + now.minute;
-    final etaMinutes = _etaTime!.hour * 60 + _etaTime!.minute;
-    var diff = etaMinutes - nowMinutes;
-    if (diff <= 0) diff += 24 * 60; // next day
-
-    setState(() {
-      _checkInActive = true;
-      _checkInSecondsLeft = diff * 60;
-    });
-
-    _checkInTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        _checkInSecondsLeft--;
-      });
-      if (_checkInSecondsLeft <= 0) {
-        timer.cancel();
-        // Mock: alert not checked in
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                const Text('You did not check in! Alert sent to contacts.'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.sm),
-            ),
-          ),
-        );
-        _cancelCheckIn();
-      }
-    });
-  }
-
-  void _cancelCheckIn() {
-    _checkInTimer?.cancel();
-    setState(() {
-      _checkInActive = false;
-      _checkInSecondsLeft = 0;
-      _etaTime = null;
-      _destinationController.clear();
-    });
-  }
-
-  Widget _buildSafeRouteSection() {
-    return NaaryaCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.location_on, color: AppColors.primary, size: 22),
-              const SizedBox(width: AppSpacing.sm),
-              Text('Set Check-in', style: AppTextStyles.h3),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (!_checkInActive) ...[
-            TextField(
-              controller: _destinationController,
-              decoration: InputDecoration(
-                labelText: 'Destination',
-                labelStyle: AppTextStyles.subtitle2,
-                prefixIcon: const Icon(Icons.place, color: AppColors.textMuted),
-                border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.buttonRadius),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.buttonRadius),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            GestureDetector(
-              onTap: _pickETA,
-              child: Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.border),
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.buttonRadius),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time,
-                        color: AppColors.textMuted, size: 20),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      _etaTime != null
-                          ? 'ETA: ${_etaTime!.format(context)}'
-                          : 'Select ETA time',
-                      style: _etaTime != null
-                          ? AppTextStyles.subtitle1
-                          : AppTextStyles.subtitle2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Alert will be sent to contacts if not checked in',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.warning,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.buttonRadius),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: _startCheckIn,
-                child: Text('Start Check-in', style: AppTextStyles.button),
-              ),
-            ),
-          ] else ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.warningLight,
-                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Check-in to "${_destinationController.text}"',
-                    style: AppTextStyles.subtitle1,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    _formatSeconds(_checkInSecondsLeft),
-                    style: AppTextStyles.h1.copyWith(
-                      color: AppColors.warning,
-                      fontSize: 32,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'remaining to check in',
-                    style: AppTextStyles.caption,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.success,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.buttonRadius),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        _cancelCheckIn();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Checked in safely!'),
-                            backgroundColor: AppColors.success,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppSpacing.sm),
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text("I'm Safe", style: AppTextStyles.button),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   // ─── Period-linked Safety Tips ────────────────────────────────────────
 
@@ -1221,8 +997,6 @@ class _SafetyScreenState extends State<SafetyScreen>
             SizedBox(height: AppSpacing.sectionGap),
             _buildFakeCallSection(),
             SizedBox(height: AppSpacing.sectionGap),
-            _buildSafeRouteSection(),
-            SizedBox(height: AppSpacing.sectionGap),
             _buildSafetyTipsSection(),
             SizedBox(height: AppSpacing.sectionGap),
             _buildNearbyHelpSection(),
@@ -1245,87 +1019,53 @@ class _SafetyScreenState extends State<SafetyScreen>
         const SizedBox(height: AppSpacing.md),
         NaaryaCard(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.gavel_rounded, color: AppColors.primary, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Know Your Rights',
-                            style: AppTextStyles.subtitle2.copyWith(
-                                fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                        Text('Legal guidance for women — domestic, workplace & more',
-                            style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
-                      ],
-                    ),
-                  ),
-                ],
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF25D366).withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.gavel_rounded, color: Color(0xFF128C7E), size: 22),
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.legalHelp),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 16),
-                            const SizedBox(width: 6),
-                            Text('Read Guide',
-                                style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.primary, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                    ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Talk to Expert',
+                        style: AppTextStyles.subtitle2.copyWith(
+                            fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                    Text('Legal guidance for women — domestic, workplace & more',
+                        style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => WhatsappService.openChat(
+                  phoneNumber: AppConstants.whatsappNumber,
+                  message: 'Hi, I need help with a legal matter and would like to speak to a legal expert.',
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF25D366).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => WhatsappService.openChat(
-                        phoneNumber: AppConstants.whatsappNumber,
-                        message: 'Hi, I need help with a legal matter and would like to speak to a legal expert.',
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF25D366).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.chat_rounded, color: Color(0xFF128C7E), size: 16),
-                            const SizedBox(width: 6),
-                            Text('Talk to Expert',
-                                style: AppTextStyles.labelSmall.copyWith(
-                                    color: const Color(0xFF128C7E), fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.chat_rounded, color: Color(0xFF128C7E), size: 16),
+                      const SizedBox(width: 6),
+                      Text('Chat',
+                          style: AppTextStyles.labelSmall.copyWith(
+                              color: const Color(0xFF128C7E), fontWeight: FontWeight.w600)),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),

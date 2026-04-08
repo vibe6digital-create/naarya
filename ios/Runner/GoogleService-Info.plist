@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>958235783130-npnre29ru1rp2332c39qq2a5uk6nqdst.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.958235783130-npnre29ru1rp2332c39qq2a5uk6nqdst</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>958235783130-cfo8a572n70tbrfiva2ci1h8q21unoq3.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDz7yXAbeXvU5xK87dkpbgdbclwfL-GBig</string>
+	<key>GCM_SENDER_ID</key>
+	<string>958235783130</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.vibe6.naarya.naaryaApp</string>
+	<key>PROJECT_ID</key>
+	<string>naarya-a12ba</string>
+	<key>STORAGE_BUCKET</key>
+	<string>naarya-a12ba.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:958235783130:ios:3bdcf887a1896905e41ae3</string>
+</dict>
+</plist>

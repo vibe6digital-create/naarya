@@ -27,12 +27,19 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     String route;
-    if (!LocalStorageService.isOnboardingDone) {
-      route = AppRoutes.onboarding;
-    } else if (!FirebaseAuthService.isLoggedIn && !LocalStorageService.isLoggedIn) {
-      route = AppRoutes.login;
-    } else {
-      route = AppRoutes.home;
+    try {
+      if (!LocalStorageService.isOnboardingDone) {
+        route = AppRoutes.onboarding;
+      } else if (!FirebaseAuthService.isLoggedIn && !LocalStorageService.isLoggedIn) {
+        route = AppRoutes.login;
+      } else {
+        route = AppRoutes.home;
+      }
+    } catch (_) {
+      // Fallback if Firebase isn't available
+      route = LocalStorageService.isOnboardingDone
+          ? (LocalStorageService.isLoggedIn ? AppRoutes.home : AppRoutes.login)
+          : AppRoutes.onboarding;
     }
 
     Navigator.of(context).pushNamedAndRemoveUntil(route, (_) => false);

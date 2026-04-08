@@ -1,14 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 class QuickActionCard extends StatelessWidget {
   final IconData icon;
-
-  /// Large decorative icon shown in the bottom-right illustration blob.
-  /// Defaults to [icon] if not provided.
-  final IconData? illustrationIcon;
-
+  final String? illustrationEmoji;
+  final String? imageUrl;
   final String title;
   final String subtitle;
   final Color iconColor;
@@ -19,7 +17,8 @@ class QuickActionCard extends StatelessWidget {
   const QuickActionCard({
     super.key,
     required this.icon,
-    this.illustrationIcon,
+    this.illustrationEmoji,
+    this.imageUrl,
     required this.title,
     this.subtitle = '',
     required this.iconColor,
@@ -30,11 +29,9 @@ class QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final illIcon = illustrationIcon ?? icon;
     final effectiveColor = isComingSoon ? AppColors.textLight : iconColor;
-    final effectiveBg = isComingSoon
-        ? AppColors.surfaceVariant
-        : iconBackgroundColor;
+    final effectiveBg =
+        isComingSoon ? AppColors.surfaceVariant : iconBackgroundColor;
 
     return GestureDetector(
       onTap: isComingSoon ? null : onTap,
@@ -59,18 +56,52 @@ class QuickActionCard extends StatelessWidget {
                   color: effectiveBg.withValues(alpha: isComingSoon ? 0.5 : 0.72),
                   shape: BoxShape.circle,
                 ),
-                child: Center(
-                  child: Padding(
-                    // nudge icon slightly toward card center so it's visible
-                    padding: const EdgeInsets.only(right: 22, bottom: 22),
-                    child: Icon(
-                      illIcon,
-                      size: 52,
-                      color: effectiveColor.withValues(
-                          alpha: isComingSoon ? 0.35 : 0.52),
-                    ),
-                  ),
-                ),
+                clipBehavior: Clip.hardEdge,
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 22, bottom: 22),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl!,
+                          fit: BoxFit.cover,
+                          fadeInDuration: const Duration(milliseconds: 300),
+                          placeholder: (context, url) => Container(
+                            color: effectiveBg,
+                          ),
+                          errorWidget: (context, url, error) => Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 22, bottom: 22),
+                              child: Text(
+                                illustrationEmoji ?? '',
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  color: Colors.white.withValues(
+                                      alpha: isComingSoon ? 0.35 : 1.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 22, bottom: 22),
+                          child: illustrationEmoji != null
+                              ? Text(
+                                  illustrationEmoji!,
+                                  style: TextStyle(
+                                    fontSize: 42,
+                                    color: Colors.white.withValues(
+                                        alpha: isComingSoon ? 0.35 : 1.0),
+                                  ),
+                                )
+                              : Icon(
+                                  icon,
+                                  size: 52,
+                                  color: effectiveColor.withValues(
+                                      alpha: isComingSoon ? 0.35 : 0.52),
+                                ),
+                        ),
+                      ),
               ),
             ),
 

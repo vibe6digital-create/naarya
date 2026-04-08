@@ -42,6 +42,18 @@ class _LoginScreenState extends State<LoginScreen> {
     await LocalStorageService.setUserPhone(phone);
     await LocalStorageService.setUserCity(_selectedCity);
 
+    // If Firebase isn't available, bypass auth for simulator testing
+    if (!FirebaseAuthService.isAvailable) {
+      await LocalStorageService.setLoggedIn(true);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.home,
+        (route) => false,
+      );
+      return;
+    }
+
     FirebaseAuthService.verifyPhoneNumber(
       phoneNumber: fullPhone,
       onCodeSent: (verificationId, resendToken) {
@@ -77,6 +89,49 @@ class _LoginScreenState extends State<LoginScreen> {
         _showError(error);
       },
     );
+  }
+
+  Future<void> _onGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await FirebaseAuthService.signInWithGoogle();
+      if (result == null) {
+        // User cancelled
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Save user info from Google account
+      final user = result.user;
+      if (user != null) {
+        await LocalStorageService.setLoggedIn(true);
+        if (user.displayName != null && user.displayName!.isNotEmpty) {
+          await LocalStorageService.setUserName(user.displayName!);
+        }
+        if (user.email != null && user.email!.isNotEmpty) {
+          await LocalStorageService.setUserEmail(user.email!);
+        }
+        if (user.photoURL != null && user.photoURL!.isNotEmpty) {
+          await LocalStorageService.setUserPhotoUrl(user.photoURL!);
+        }
+        if (user.phoneNumber != null && user.phoneNumber!.isNotEmpty) {
+          await LocalStorageService.setUserPhone(user.phoneNumber!);
+        }
+      }
+
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.home,
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('Google sign-in error: $e');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Google sign-in failed. Please try again.');
+    }
   }
 
   void _showError(String message) {
@@ -280,6 +335,48 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           )
                         : Text('Send OTP', style: AppTextStyles.button),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: AppColors.border)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: AppTextStyles.caption.copyWith(color: AppColors.textLight),
+                      ),
+                    ),
+                    const Expanded(child: Divider(color: AppColors.border)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Google Sign-In button
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _onGoogleSignIn,
+                    icon: const Icon(
+                      Icons.g_mobiledata,
+                      size: 28,
+                      color: AppColors.textDark,
+                    ),
+                    label: Text(
+                      'Continue with Google',
+                      style: AppTextStyles.button.copyWith(color: AppColors.textDark),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                      ),
+                      backgroundColor: AppColors.surface,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

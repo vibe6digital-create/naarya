@@ -7,6 +7,7 @@ import '../../presentation/screens/auth/otp_screen.dart';
 import '../../presentation/screens/shell/main_shell.dart';
 import '../../presentation/screens/cycle_tracker/cycle_tracker_screen.dart';
 import '../../presentation/screens/cycle_tracker/cycle_log_screen.dart';
+import '../../presentation/screens/cycle_tracker/edit_period_screen.dart';
 import '../../presentation/screens/consultation/gynec_consult_screen.dart';
 import '../../presentation/screens/consultation/breast_consult_screen.dart';
 import '../../presentation/screens/nutrition/nutrition_screen.dart';
@@ -27,6 +28,8 @@ import '../../presentation/screens/safety/safety_screen.dart';
 import '../../presentation/screens/mental_fitness/mental_fitness_screen.dart';
 import '../../presentation/screens/antenatal/antenatal_screen.dart';
 import '../../presentation/screens/products/products_screen.dart';
+import '../../presentation/screens/reminders/reminders_screen.dart';
+import '../../presentation/screens/lab_test/lab_test_screen.dart';
 import '../constants/asset_paths.dart';
 
 class AppRouter {
@@ -48,6 +51,9 @@ class AppRouter {
         return _buildRoute(const CycleTrackerScreen());
       case AppRoutes.cycleLog:
         return _buildRoute(const CycleLogScreen());
+      case AppRoutes.editPeriod:
+        final dates = settings.arguments as Set<DateTime>? ?? {};
+        return _buildRoute(EditPeriodScreen(initialDates: dates));
       case AppRoutes.gynecConsult:
         return _buildRoute(const GynecConsultScreen());
       case AppRoutes.breastConsult:
@@ -128,6 +134,10 @@ class AppRouter {
         return _buildRoute(const AntenatalScreen());
       case AppRoutes.products:
         return _buildRoute(const ProductsScreen());
+      case AppRoutes.reminders:
+        return _buildRoute(const RemindersScreen());
+      case AppRoutes.labTest:
+        return _buildRoute(const LabTestScreen());
       default:
         return _buildRoute(
           const Scaffold(body: Center(child: Text('Page not found'))),

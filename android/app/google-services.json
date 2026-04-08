@@ -12,7 +12,20 @@
           "package_name": "com.naarya.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "958235783130-cfo8a572n70tbrfiva2ci1h8q21unoq3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naarya.app",
+            "certificate_hash": "a9e8849b8daf2567f33c2461860867f25b4e6039"
+          }
+        },
+        {
+          "client_id": "958235783130-7q6vknno5j48t7rm510ihvcn7serck6g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAYjdA4a7LrS9MPJ9tA99ZgVFzncLvAYNg"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "958235783130-7q6vknno5j48t7rm510ihvcn7serck6g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

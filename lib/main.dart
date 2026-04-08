@@ -7,7 +7,11 @@ import 'app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {
+    // Firebase config may be missing on iOS simulator
+  }
   await LocalStorageService.init();
 
   SystemChrome.setPreferredOrientations([

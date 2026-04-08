@@ -25,6 +25,12 @@ class LocalStorageService {
   static String get userCity => _prefs.getString('user_city') ?? 'Indore';
   static Future<void> setUserCity(String city) => _prefs.setString('user_city', city);
 
+  static String get userEmail => _prefs.getString('user_email') ?? '';
+  static Future<void> setUserEmail(String email) => _prefs.setString('user_email', email);
+
+  static String get userPhotoUrl => _prefs.getString('user_photo_url') ?? '';
+  static Future<void> setUserPhotoUrl(String url) => _prefs.setString('user_photo_url', url);
+
   static String get userHealthGoal => _prefs.getString('user_health_goal') ?? '';
   static Future<void> setUserHealthGoal(String goal) => _prefs.setString('user_health_goal', goal);
 
@@ -40,6 +46,25 @@ class LocalStorageService {
 
   static int get periodLength => _prefs.getInt('period_length') ?? 5;
   static Future<void> setPeriodLength(int length) => _prefs.setInt('period_length', length);
+
+  // Period dates (list of yyyy-MM-dd strings)
+  static List<String> get periodDates => _prefs.getStringList('period_dates') ?? [];
+  static Future<void> setPeriodDates(List<String> dates) => _prefs.setStringList('period_dates', dates);
+
+  // Cycle notes (JSON map: {"yyyy-MM-dd": "note text"})
+  static String? get cycleNotesJson => _prefs.getString('cycle_notes');
+  static Future<void> setCycleNotesJson(String json) => _prefs.setString('cycle_notes', json);
+
+  // Daily log (JSON map: {"yyyy-MM-dd": { "sexLife": [...], "symptoms": [...], ... }})
+  static String? get dailyLogJson => _prefs.getString('daily_log');
+  static Future<void> setDailyLogJson(String json) => _prefs.setString('daily_log', json);
+
+  // Keep Notes
+  static String? get keepNotesJson => _prefs.getString('keep_notes');
+  static Future<void> setKeepNotesJson(String json) => _prefs.setString('keep_notes', json);
+
+  static bool get keepNotesGridView => _prefs.getBool('keep_notes_grid') ?? true;
+  static Future<void> setKeepNotesGridView(bool value) => _prefs.setBool('keep_notes_grid', value);
 
   // Clear all
   static Future<void> clear() => _prefs.clear();

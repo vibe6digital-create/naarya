@@ -19,6 +19,7 @@ class AppRoutes {
   static const String cycleTracker = '/cycle-tracker';
   static const String cycleLog = '/cycle-log';
   static const String cycleHistory = '/cycle-history';
+  static const String editPeriod = '/edit-period';
   static const String reminderAdd = '/reminders/add';
   static const String todo = '/todo';
   static const String gynecConsult = '/consult/gynec';
@@ -50,4 +51,6 @@ class AppRoutes {
   static const String safety = '/safety';
   static const String antenatal = '/antenatal';
   static const String products = '/products';
+  static const String labTest = '/lab-test';
+  static const String naturopathy = '/naturopathy';
 }

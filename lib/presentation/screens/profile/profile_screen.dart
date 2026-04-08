@@ -22,6 +22,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userName = '';
   String _userCity = '';
   String _userPhone = '';
+  String _userEmail = '';
+  String _userPhotoUrl = '';
 
   @override
   void initState() {
@@ -34,6 +36,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _userName = LocalStorageService.userName;
       _userCity = LocalStorageService.userCity;
       _userPhone = LocalStorageService.userPhone;
+      _userEmail = LocalStorageService.userEmail;
+      _userPhotoUrl = LocalStorageService.userPhotoUrl;
     });
   }
 
@@ -180,13 +184,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: AppColors.primary,
-                    child: Text(
-                      _userInitial,
-                      style: AppTextStyles.h1.copyWith(
-                        color: Colors.white,
-                        fontSize: 32,
-                      ),
-                    ),
+                    backgroundImage: _userPhotoUrl.isNotEmpty
+                        ? NetworkImage(_userPhotoUrl)
+                        : null,
+                    child: _userPhotoUrl.isEmpty
+                        ? Text(
+                            _userInitial,
+                            style: AppTextStyles.h1.copyWith(
+                              color: Colors.white,
+                              fontSize: 32,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
@@ -194,11 +203,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: AppTextStyles.h2,
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  if (_userCity.isNotEmpty)
+                  if (_userEmail.isNotEmpty)
                     Text(
-                      _userCity,
+                      _userEmail,
                       style: AppTextStyles.subtitle2,
                     ),
+                  if (_userCity.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _userCity,
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
                   if (_userPhone.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
