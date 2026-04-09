@@ -1,0 +1,1 @@
+ C:\\flutter\ projects\\vibe\ code\\Naarya\\naarya\\.dart_tool\\flutter_build\\7abb124590cebebced09072d87f9a428\\native_assets.json: 

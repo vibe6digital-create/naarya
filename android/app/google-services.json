@@ -14,11 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "958235783130-cfo8a572n70tbrfiva2ci1h8q21unoq3.apps.googleusercontent.com",
+          "client_id": "958235783130-g75ap5j481hvcla0cp85li9ba1uq54cu.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.naarya.app",
-            "certificate_hash": "a9e8849b8daf2567f33c2461860867f25b4e6039"
+            "certificate_hash": "4687e154c4f260a67dee5d031b5aa81383df3b05"
+          }
+        },
+        {
+          "client_id": "958235783130-n7l535d8van8qpvfj16dreh781vjnfgm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naarya.app",
+            "certificate_hash": "764d05a6654d6d4a1d73d76d93db9ef8e38056e0"
           }
         },
         {
@@ -37,6 +45,13 @@
             {
               "client_id": "958235783130-7q6vknno5j48t7rm510ihvcn7serck6g.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "958235783130-npnre29ru1rp2332c39qq2a5uk6nqdst.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vibe6.naarya.naaryaApp"
+              }
             }
           ]
         }

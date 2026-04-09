@@ -76,20 +76,42 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
   // --- Persistence ---
 
   void _loadNotes() {
-    // Load from local storage first for instant UI
+    // 1. Load local storage immediately — instant UI, no flicker
+    List<TodoItem> localNotes = [];
     final json = LocalStorageService.keepNotesJson;
     if (json != null && json.isNotEmpty) {
       final list = jsonDecode(json) as List;
-      _notes = list
+      localNotes = list
           .map((e) => TodoItem.fromJson(e as Map<String, dynamic>))
           .toList();
+      _notes = localNotes;
     }
 
-    // Then try Firestore and update if available
+    // 2. Merge with Firestore asynchronously
     if (FirestoreNotesService.isAvailable) {
       FirestoreNotesService.loadNotes().then((firestoreNotes) {
-        if (firestoreNotes.isNotEmpty && mounted) {
-          setState(() => _notes = firestoreNotes);
+        if (!mounted) return;
+
+        if (firestoreNotes.isEmpty && localNotes.isNotEmpty) {
+          // First-time Firestore setup: push all local notes up
+          for (final note in localNotes) {
+            FirestoreNotesService.addNote(note).catchError((_) {});
+          }
+          // Local list is already correct — no setState needed
+        } else if (firestoreNotes.isNotEmpty) {
+          // Merge: Firestore is source of truth for existing notes.
+          // But preserve any notes added offline (in local but not in Firestore).
+          final cloudIds = firestoreNotes.map((n) => n.id).toSet();
+          final offlineNotes =
+              localNotes.where((n) => !cloudIds.contains(n.id)).toList();
+
+          // Push offline-only notes to Firestore
+          for (final note in offlineNotes) {
+            FirestoreNotesService.addNote(note).catchError((_) {});
+          }
+
+          final merged = [...firestoreNotes, ...offlineNotes];
+          setState(() => _notes = merged);
           _saveNotesLocal();
         }
       }).catchError((_) {});
@@ -181,6 +203,7 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
           onPressed: () {
             setState(() => _notes.insert(idx.clamp(0, _notes.length), note));
             _saveNotes();
+            FirestoreNotesService.addNote(note).catchError((_) {}); // restore in Firestore too
           },
         ),
       ),
@@ -1037,15 +1060,16 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
               Navigator.pop(context);
             }
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 12,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 12,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1401,8 +1425,32 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
                       ),
                     ),
 
+                    if (isEdit) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _deleteNote(existing);
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Delete Note'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 8),
                   ],
+                  ),
                 ),
               ),
             );

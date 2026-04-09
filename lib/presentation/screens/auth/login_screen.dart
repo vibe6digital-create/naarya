@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/asset_paths.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/firebase_auth_service.dart';
+import '../../../core/services/firestore_service.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -70,7 +71,14 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       onAutoVerified: (credential) async {
         try {
-          await FirebaseAuthService.signInWithCredential(credential);
+          final result = await FirebaseAuthService.signInWithCredential(credential);
+          if (result.user != null) {
+            await FirestoreService.saveOrUpdateUser(
+              result.user!,
+              phone: phone,
+              city: _selectedCity,
+            );
+          }
           if (!mounted) return;
           await LocalStorageService.setLoggedIn(true);
           Navigator.of(context).pushNamedAndRemoveUntil(
@@ -106,6 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
       // Save user info from Google account
       final user = result.user;
       if (user != null) {
+        // Persist to Firestore (non-blocking — errors are caught internally)
+        await FirestoreService.saveOrUpdateUser(user);
+
+        // Persist locally for offline/fallback access
         await LocalStorageService.setLoggedIn(true);
         if (user.displayName != null && user.displayName!.isNotEmpty) {
           await LocalStorageService.setUserName(user.displayName!);

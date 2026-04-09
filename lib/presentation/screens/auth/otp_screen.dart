@@ -7,6 +7,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/firebase_auth_service.dart';
+import '../../../core/services/firestore_service.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -87,10 +88,18 @@ class _OtpScreenState extends State<OtpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuthService.signInWithOtp(
+      final result = await FirebaseAuthService.signInWithOtp(
         verificationId: _verificationId,
         otp: otp,
       );
+
+      if (result.user != null) {
+        await FirestoreService.saveOrUpdateUser(
+          result.user!,
+          phone: _phoneNumber,
+          city: LocalStorageService.userCity,
+        );
+      }
 
       await LocalStorageService.setLoggedIn(true);
 
@@ -139,7 +148,14 @@ class _OtpScreenState extends State<OtpScreen> {
       },
       onAutoVerified: (credential) async {
         try {
-          await FirebaseAuthService.signInWithCredential(credential);
+          final result = await FirebaseAuthService.signInWithCredential(credential);
+          if (result.user != null) {
+            await FirestoreService.saveOrUpdateUser(
+              result.user!,
+              phone: _phoneNumber,
+              city: LocalStorageService.userCity,
+            );
+          }
           await LocalStorageService.setLoggedIn(true);
           if (!mounted) return;
           Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
