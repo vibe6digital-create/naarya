@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/services/local_storage_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/routes/app_routes.dart';
 import 'daily_log_screen.dart';
 
@@ -87,10 +88,17 @@ class _CycleTrackerScreenState extends State<CycleTrackerScreen> {
         break;
       }
     }
+
+    final previous = _lastPeriodStart;
     _lastPeriodStart = blockStart;
     LocalStorageService.setLastPeriodDate(
       _lastPeriodStart!.toIso8601String().split('T')[0],
     );
+
+    // Schedule breast exam reminders whenever period start changes
+    if (previous == null || !previous.isAtSameMomentAs(_lastPeriodStart!)) {
+      NotificationService.scheduleBreastExamReminders(_lastPeriodStart!);
+    }
   }
 
   void _savePeriodDates() {

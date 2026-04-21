@@ -7,6 +7,7 @@ class QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String? illustrationEmoji;
   final String? imageUrl;
+  final String? assetImagePath;
   final String title;
   final String subtitle;
   final Color iconColor;
@@ -19,6 +20,7 @@ class QuickActionCard extends StatelessWidget {
     required this.icon,
     this.illustrationEmoji,
     this.imageUrl,
+    this.assetImagePath,
     required this.title,
     this.subtitle = '',
     required this.iconColor,
@@ -45,65 +47,81 @@ class QuickActionCard extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         child: Stack(
           children: [
-            // ── Illustration blob — bottom-right, partially clipped ──
-            Positioned(
-              right: -22,
-              bottom: -22,
-              child: Container(
-                width: 108,
-                height: 108,
-                decoration: BoxDecoration(
-                  color: effectiveBg.withValues(alpha: isComingSoon ? 0.5 : 0.72),
-                  shape: BoxShape.circle,
+            // ── Illustration — bottom-right, partially clipped ──
+            if (assetImagePath != null)
+              // Asset image: no background circle, transparent PNG shown directly
+              Positioned(
+                right: -8,
+                bottom: -8,
+                child: Opacity(
+                  opacity: isComingSoon ? 0.35 : 1.0,
+                  child: Image.asset(
+                    assetImagePath!,
+                    width: 105,
+                    height: 105,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-                clipBehavior: Clip.hardEdge,
-                child: imageUrl != null && imageUrl!.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.only(right: 22, bottom: 22),
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl!,
-                          fit: BoxFit.cover,
-                          fadeInDuration: const Duration(milliseconds: 300),
-                          placeholder: (context, url) => Container(
-                            color: effectiveBg,
-                          ),
-                          errorWidget: (context, url, error) => Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 22, bottom: 22),
-                              child: Text(
-                                illustrationEmoji ?? '',
-                                style: TextStyle(
-                                  fontSize: 42,
-                                  color: Colors.white.withValues(
-                                      alpha: isComingSoon ? 0.35 : 1.0),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    : Center(
-                        child: Padding(
+              )
+            else
+              Positioned(
+                right: -22,
+                bottom: -22,
+                child: Container(
+                  width: 108,
+                  height: 108,
+                  decoration: BoxDecoration(
+                    color: effectiveBg.withValues(alpha: isComingSoon ? 0.5 : 0.72),
+                    shape: BoxShape.circle,
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  child: imageUrl != null && imageUrl!.isNotEmpty
+                      ? Padding(
                           padding: const EdgeInsets.only(right: 22, bottom: 22),
-                          child: illustrationEmoji != null
-                              ? Text(
-                                  illustrationEmoji!,
+                          child: CachedNetworkImage(
+                            imageUrl: imageUrl!,
+                            fit: BoxFit.cover,
+                            fadeInDuration: const Duration(milliseconds: 300),
+                            placeholder: (context, url) => Container(
+                              color: effectiveBg,
+                            ),
+                            errorWidget: (context, url, error) => Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 22, bottom: 22),
+                                child: Text(
+                                  illustrationEmoji ?? '',
                                   style: TextStyle(
                                     fontSize: 42,
                                     color: Colors.white.withValues(
                                         alpha: isComingSoon ? 0.35 : 1.0),
                                   ),
-                                )
-                              : Icon(
-                                  icon,
-                                  size: 52,
-                                  color: effectiveColor.withValues(
-                                      alpha: isComingSoon ? 0.35 : 0.52),
                                 ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 22, bottom: 22),
+                            child: illustrationEmoji != null
+                                ? Text(
+                                    illustrationEmoji!,
+                                    style: TextStyle(
+                                      fontSize: 42,
+                                      color: Colors.white.withValues(
+                                          alpha: isComingSoon ? 0.35 : 1.0),
+                                    ),
+                                  )
+                                : Icon(
+                                    icon,
+                                    size: 52,
+                                    color: effectiveColor.withValues(
+                                        alpha: isComingSoon ? 0.35 : 0.52),
+                                  ),
+                          ),
                         ),
-                      ),
+                ),
               ),
-            ),
 
             // ── Coming Soon badge — top right ──
             if (isComingSoon)

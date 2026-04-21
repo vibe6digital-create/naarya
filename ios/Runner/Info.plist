@@ -58,6 +58,17 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Naarya needs camera access to capture prescription photos for your health vault.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Naarya needs access to your photo library to upload prescription images to your health vault.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Naarya may save processed images to your photo library.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

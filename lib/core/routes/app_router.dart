@@ -30,6 +30,10 @@ import '../../presentation/screens/antenatal/antenatal_screen.dart';
 import '../../presentation/screens/products/products_screen.dart';
 import '../../presentation/screens/reminders/reminders_screen.dart';
 import '../../presentation/screens/lab_test/lab_test_screen.dart';
+import '../../presentation/screens/notifications/notifications_screen.dart';
+import '../../presentation/screens/consultation/consult_hub_screen.dart';
+import '../../presentation/screens/naturopathy/naturopathy_screen.dart';
+import '../../presentation/screens/safe_space/safe_space_screen.dart';
 import '../constants/asset_paths.dart';
 
 class AppRouter {
@@ -54,6 +58,8 @@ class AppRouter {
       case AppRoutes.editPeriod:
         final dates = settings.arguments as Set<DateTime>? ?? {};
         return _buildRoute(EditPeriodScreen(initialDates: dates));
+      case AppRoutes.consult:
+        return _buildRoute(const ConsultHubScreen());
       case AppRoutes.gynecConsult:
         return _buildRoute(const GynecConsultScreen());
       case AppRoutes.breastConsult:
@@ -138,6 +144,12 @@ class AppRouter {
         return _buildRoute(const RemindersScreen());
       case AppRoutes.labTest:
         return _buildRoute(const LabTestScreen());
+      case AppRoutes.notifications:
+        return _buildRoute(const NotificationsScreen());
+      case AppRoutes.naturopathy:
+        return _buildRoute(const NaturopathyScreen());
+      case AppRoutes.safeSpace:
+        return _buildRoute(const SafeSpaceScreen());
       default:
         return _buildRoute(
           const Scaffold(body: Center(child: Text('Page not found'))),

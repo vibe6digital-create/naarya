@@ -53,4 +53,6 @@ class AppRoutes {
   static const String products = '/products';
   static const String labTest = '/lab-test';
   static const String naturopathy = '/naturopathy';
+  static const String notifications = '/notifications';
+  static const String safeSpace = '/safe-space';
 }

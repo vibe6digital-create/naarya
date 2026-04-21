@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/daily_health_tip_service.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -10,7 +14,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../widgets/common/section_header.dart';
 import 'widgets/quick_action_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   static const List<String> _healthTips = [
@@ -23,9 +27,47 @@ class HomeScreen extends StatelessWidget {
     'Omega-3 fatty acids found in walnuts and flaxseeds can help reduce inflammation and menstrual pain.',
   ];
 
-  String _getDailyTip() {
-    final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
-    return _healthTips[dayOfYear % _healthTips.length];
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  DailyHealthTipData? _dailyTip;
+  VideoPlayerController? _penguinController;
+  int _notificationCount = 0;
+  StreamSubscription<QuerySnapshot>? _notificationSub;
+
+  @override
+  void initState() {
+    super.initState();
+    DailyHealthTipService.getDailyTip().then((data) {
+      if (mounted) setState(() => _dailyTip = data);
+    });
+    _penguinController =
+        VideoPlayerController.asset('assets/images/penguin.webm')
+          ..initialize().then((_) {
+            if (mounted) {
+              setState(() {});
+              _penguinController!.setLooping(true);
+              _penguinController!.setVolume(0);
+              _penguinController!.play();
+            }
+          });
+    _notificationSub = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .listen((snap) {
+      if (mounted) setState(() => _notificationCount = snap.docs.length);
+    });
+  }
+
+  @override
+  void dispose() {
+    _penguinController?.dispose();
+    _notificationSub?.cancel();
+    super.dispose();
   }
 
   CyclePhaseInfo? _getCycleInfo() {
@@ -48,23 +90,44 @@ class HomeScreen extends StatelessWidget {
     final cycleInfo = _getCycleInfo();
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
+      // Cycle Tracker drawer — opens when penguin icon is tapped
+      drawer: cycleInfo != null
+          ? Drawer(
+              backgroundColor: AppColors.background,
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cycle Tracker',
+                        style: AppTextStyles.h2.copyWith(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCycleSummaryCard(context, cycleInfo),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: AppSpacing.pagePadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildGreetingCard(greeting, displayName),
+              _buildGreetingCard(context, greeting, displayName),
               const SizedBox(height: AppSpacing.sectionGap),
 
-              if (cycleInfo != null) ...[
-                _buildCycleSummaryCard(context, cycleInfo),
-                const SizedBox(height: AppSpacing.sectionGap),
-              ],
-
               // Daily Health Tip
-              _buildHealthTipCard(),
+              _buildHealthTipCard(context),
               const SizedBox(height: AppSpacing.sectionGap),
 
               // Main Features
@@ -93,7 +156,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGreetingCard(String greeting, String displayName) {
+  Widget _buildGreetingCard(BuildContext context, String greeting, String displayName) {
     return Container(
       height: 118,
       decoration: BoxDecoration(
@@ -154,11 +217,13 @@ class HomeScreen extends StatelessWidget {
 
           // ── Glassmorphism frosted layer ──
           Positioned.fill(
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: Container(
-                  color: Colors.white.withValues(alpha: 0.04),
+            child: IgnorePointer(
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: Container(
+                    color: Colors.white.withValues(alpha: 0.04),
+                  ),
                 ),
               ),
             ),
@@ -191,22 +256,84 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Glass icon bubble
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.45),
-                      width: 1.2,
+                // Penguin icon — opens Cycle Tracker drawer
+                GestureDetector(
+                  onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: _penguinController != null &&
+                              _penguinController!.value.isInitialized
+                          ? FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: _penguinController!.value.size.width,
+                                height: _penguinController!.value.size.height,
+                                child: VideoPlayer(_penguinController!),
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/images/penguin.gif',
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
-                  child: const Icon(
-                    Icons.wb_sunny_rounded,
-                    color: Colors.white,
-                    size: 24,
+                ),
+                const SizedBox(width: 8),
+                // Notification bell with badge
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.notifications),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.45),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      if (_notificationCount > 0)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                                minWidth: 18, minHeight: 18),
+                            child: Text(
+                              _notificationCount > 99
+                                  ? '99+'
+                                  : '$_notificationCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -396,7 +523,18 @@ class HomeScreen extends StatelessWidget {
   }
 
 
-  Widget _buildHealthTipCard() {
+  Widget _buildHealthTipCard(BuildContext context) {
+    final dayOfYear =
+        DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+
+    final String tipText = _dailyTip?.tip ??
+        HomeScreen._healthTips[dayOfYear % HomeScreen._healthTips.length];
+
+    final parts = <String>[tipText];
+    if (_dailyTip?.awareness != null) parts.add(_dailyTip!.awareness!);
+    if (_dailyTip?.thought != null) parts.add('"${_dailyTip!.thought}"');
+    final tip = parts.join('\n\n');
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -421,7 +559,8 @@ class HomeScreen extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.lightbulb_rounded, color: AppColors.primary, size: 20),
+            child: const Icon(Icons.lightbulb_rounded,
+                color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -437,7 +576,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(_getDailyTip(), style: AppTextStyles.body2),
+                Text(tip, style: AppTextStyles.body2),
               ],
             ),
           ),
@@ -450,8 +589,7 @@ class HomeScreen extends StatelessWidget {
     final actions = [
       _QuickAction(
         icon: Icons.notifications_active_rounded,
-        illustrationEmoji: '\u{1F514}',
-        imageUrl: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/reminder.png',
         title: 'Reminder',
         subtitle: 'Never miss a thing',
         color: const Color(0xFFE57BA8),
@@ -460,8 +598,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.note_alt_rounded,
-        illustrationEmoji: '\u{1F4DD}',
-        imageUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/Keep notes.png',
         title: 'Keep Notes',
         subtitle: 'Tasks & reminders',
         color: const Color(0xFF5C8DBB),
@@ -470,8 +607,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.shield_rounded,
-        illustrationEmoji: '\u{1F6E1}\u{FE0F}',
-        imageUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/Safety & legal.png',
         title: 'Safety & Legal',
         subtitle: 'Stay safe, know rights',
         color: AppColors.error,
@@ -480,8 +616,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.folder_shared_rounded,
-        illustrationEmoji: '\u{1F5C2}\u{FE0F}',
-        imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/medicalrecords.png',
         title: 'Medical Records',
         subtitle: 'Your health vault',
         color: AppColors.phaseLuteal,
@@ -490,8 +625,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.medical_services_rounded,
-        illustrationEmoji: '\u{1F469}\u{200D}\u{2695}\u{FE0F}',
-        imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/Consult Doctor.png',
         title: 'Consult Doctor',
         subtitle: 'Meet our experts',
         color: AppColors.primary,
@@ -500,8 +634,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.child_care_rounded,
-        illustrationEmoji: '\u{1F930}',
-        imageUrl: 'https://images.unsplash.com/photo-1556760544-74068565f05c?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/Garbhsanskar.png',
         title: 'Antenatal & Garbh Sanskar',
         subtitle: 'Expert sessions',
         color: AppColors.secondary,
@@ -510,8 +643,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.self_improvement_rounded,
-        illustrationEmoji: '\u{1F9D8}\u{200D}\u{2640}\u{FE0F}',
-        imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/Physicalfitness.png',
         title: 'Physical Fitness',
         subtitle: 'Yoga & workouts',
         color: AppColors.phaseOvulation,
@@ -520,8 +652,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.psychology_rounded,
-        illustrationEmoji: '\u{1F9E0}',
-        imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/mentalfitness.png',
         title: 'Mental Fitness',
         subtitle: 'Mind & wellness',
         color: const Color(0xFF7B52A8),
@@ -530,8 +661,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.water_drop_rounded,
-        illustrationEmoji: '\u{1FA78}',
-        imageUrl: 'https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/cycle tracker.png',
         title: 'Cycle Tracker',
         subtitle: 'Track your phases',
         color: AppColors.phaseMenstrual,
@@ -540,8 +670,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _QuickAction(
         icon: Icons.spa_rounded,
-        illustrationEmoji: '\u{1F33F}',
-        imageUrl: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&h=350&fit=crop&auto=format&q=80',
+        assetImagePath: 'assets/images/naturopathy.png',
         title: 'Naturopathy',
         subtitle: 'Natural healing',
         color: const Color(0xFF2E7D32),
@@ -566,6 +695,7 @@ class HomeScreen extends StatelessWidget {
           icon: action.icon,
           illustrationEmoji: action.illustrationEmoji,
           imageUrl: action.imageUrl,
+          assetImagePath: action.assetImagePath,
           title: action.title,
           subtitle: action.subtitle,
           iconColor: action.color,
@@ -631,6 +761,7 @@ class _QuickAction {
   final IconData icon;
   final String? illustrationEmoji;
   final String? imageUrl;
+  final String? assetImagePath;
   final String title;
   final String subtitle;
   final Color color;
@@ -641,6 +772,7 @@ class _QuickAction {
     required this.icon,
     this.illustrationEmoji,
     this.imageUrl,
+    this.assetImagePath,
     required this.title,
     required this.subtitle,
     required this.color,

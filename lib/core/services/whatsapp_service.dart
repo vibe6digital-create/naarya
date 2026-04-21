@@ -8,9 +8,13 @@ class WhatsappService {
     String message = '',
   }) async {
     final encoded = Uri.encodeComponent(message);
-    final url = Uri.parse('https://wa.me/$phoneNumber?text=$encoded');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+    // Try WhatsApp deep link first, fall back to browser
+    final waUrl = Uri.parse('whatsapp://send?phone=$phoneNumber&text=$encoded');
+    final webUrl = Uri.parse('https://wa.me/$phoneNumber?text=$encoded');
+    if (await canLaunchUrl(waUrl)) {
+      await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+    } else {
+      await launchUrl(webUrl, mode: LaunchMode.externalApplication);
     }
   }
 

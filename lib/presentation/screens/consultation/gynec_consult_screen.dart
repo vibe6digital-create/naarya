@@ -18,7 +18,7 @@ class GynecConsultScreen extends StatelessWidget {
     id: 'dr_niyati',
     name: 'Dr. Niyati Jain Shah',
     degree: 'MS (OBG)',
-    specialty: 'Gynecologist & Cancer Specialist',
+    specialties: ['Gynecologist & Cancer Specialist'],
     about:
         'Dr. Niyati Jain Shah is a highly experienced gynecologist and cancer '
         'specialist dedicated to providing compassionate and comprehensive '

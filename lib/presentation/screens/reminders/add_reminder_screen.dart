@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/app_spacing.dart';
@@ -74,7 +75,7 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
     }
   }
 
-  void _onSave() {
+  Future<void> _onSave() async {
     if (!_formKey.currentState!.validate()) return;
 
     final dateTime = DateTime(
@@ -85,6 +86,8 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
       _selectedTime.minute,
     );
 
+    final id = dateTime.millisecondsSinceEpoch ~/ 1000;
+
     final reminder = ReminderModel(
       id: const Uuid().v4(),
       title: _titleController.text.trim(),
@@ -94,16 +97,28 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
       isEnabled: true,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Reminder added!'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
+    final granted = await NotificationService.requestPermission();
+    if (granted) {
+      await NotificationService.schedule(
+        id: id,
+        title: reminder.title,
+        body: 'Time for your ${_typeLabel(_selectedType).toLowerCase()} reminder.',
+        scheduledTime: dateTime,
+        repeat: _selectedRepeat,
+      );
+    }
 
-    Navigator.pop(context, reminder);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(granted ? 'Reminder scheduled!' : 'Reminder saved (notifications denied)'),
+          backgroundColor: granted ? AppColors.success : AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      Navigator.pop(context, reminder);
+    }
   }
 
   @override
@@ -144,7 +159,7 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
               Text('Type', style: AppTextStyles.subtitle1),
               const SizedBox(height: 8),
               DropdownButtonFormField<ReminderType>(
-                value: _selectedType,
+                initialValue: _selectedType,
                 decoration: _inputDecoration(null),
                 style: AppTextStyles.body1,
                 items: ReminderType.values.map((type) {
@@ -226,7 +241,7 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
               Text('Repeat', style: AppTextStyles.subtitle1),
               const SizedBox(height: 8),
               DropdownButtonFormField<RepeatFrequency>(
-                value: _selectedRepeat,
+                initialValue: _selectedRepeat,
                 decoration: _inputDecoration(null),
                 style: AppTextStyles.body1,
                 items: RepeatFrequency.values.map((freq) {

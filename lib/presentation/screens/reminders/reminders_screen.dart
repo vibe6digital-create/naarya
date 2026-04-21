@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/app_spacing.dart';
@@ -320,15 +321,24 @@ class _RemindersScreenState extends State<RemindersScreen> {
               const SizedBox(width: 8),
               Switch(
                 value: reminder.isEnabled,
-                onChanged: (val) {
-                  setState(() {
-                    final idx = _reminders.indexOf(reminder);
-                    if (idx >= 0) {
-                      _reminders[idx] = reminder.copyWith(isEnabled: val);
-                    }
-                  });
+                onChanged: (val) async {
+                  final idx = _reminders.indexOf(reminder);
+                  if (idx < 0) return;
+                  setState(() => _reminders[idx] = reminder.copyWith(isEnabled: val));
+                  final notifId = reminder.dateTime.millisecondsSinceEpoch ~/ 1000;
+                  if (!val) {
+                    await NotificationService.cancel(notifId);
+                  } else if (reminder.dateTime.isAfter(DateTime.now())) {
+                    await NotificationService.schedule(
+                      id: notifId,
+                      title: reminder.title,
+                      body: 'Time for your ${reminder.typeLabel.toLowerCase()} reminder.',
+                      scheduledTime: reminder.dateTime,
+                      repeat: reminder.repeat,
+                    );
+                  }
                 },
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ],
           ),
