@@ -91,6 +91,7 @@ class _FitnessScreenState extends State<FitnessScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useSafeArea: true,
       builder: (ctx) => _VideoPreviewSheet(
         video: video,
         onWatch: () {
@@ -134,7 +135,13 @@ class _FitnessScreenState extends State<FitnessScreen> {
             children: [
               // ── Hero quote ──
               _QuoteBanner(),
+              const SizedBox(height: AppSpacing.sectionGap),
+
+              // ── Meet Our Experts ──
+              const SectionHeader(title: 'Meet Our Experts'),
               const SizedBox(height: AppSpacing.componentGap),
+              _buildExpertsSection(),
+              const SizedBox(height: AppSpacing.sectionGap),
 
               // ── Introduction ──
               _InfoSection(
@@ -218,12 +225,6 @@ class _FitnessScreenState extends State<FitnessScreen> {
                   );
                 },
               ),
-              const SizedBox(height: AppSpacing.sectionGap),
-
-              // ── Meet Our Experts ──
-              const SectionHeader(title: 'Meet Our Experts'),
-              const SizedBox(height: AppSpacing.componentGap),
-              _buildExpertsSection(),
               const SizedBox(height: AppSpacing.sectionGap),
 
               // ── Category filter chips ──
@@ -418,10 +419,8 @@ class _FitnessScreenState extends State<FitnessScreen> {
   }
 
   Widget _buildExpertsSection() {
-    final category =
-        _selectedCategory == 'All' ? null : _selectedCategory;
     return StreamBuilder<List<ExpertModel>>(
-      stream: ExpertService.expertsStream(specialty: category),
+      stream: ExpertService.expertsStreamForCategory('Physical Fitness'),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(
@@ -465,7 +464,7 @@ class _FitnessScreenState extends State<FitnessScreen> {
         }
 
         return SizedBox(
-          height: 168,
+          height: 182,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
@@ -1167,16 +1166,18 @@ class _VideoPreviewSheetState extends State<_VideoPreviewSheet> {
       );
     }
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          const SizedBox(height: 12),
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            const SizedBox(height: 12),
           Container(
             width: 40,
             height: 4,
@@ -1257,8 +1258,9 @@ class _VideoPreviewSheetState extends State<_VideoPreviewSheet> {
             ),
           ),
 
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
-        ],
+          SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
+          ],
+        ),
       ),
     );
   }

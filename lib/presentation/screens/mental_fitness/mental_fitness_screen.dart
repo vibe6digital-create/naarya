@@ -105,6 +105,7 @@ class _MentalFitnessScreenState extends State<MentalFitnessScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useSafeArea: true,
       builder: (ctx) => _VideoPreviewSheet(
         video: video,
         onWatch: () {
@@ -302,11 +303,11 @@ class _MentalFitnessScreenState extends State<MentalFitnessScreen> {
         }
 
         return SizedBox(
-          height: 168,
+          height: 182,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
-            itemCount: doctors.length,
+            itemCount: experts.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (_, i) => _DoctorCard(expert: experts[i]),
           ),
@@ -1227,25 +1228,27 @@ class _VideoPreviewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final thumbnail = video.resolvedThumbnail;
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40, height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: AppColors.border, borderRadius: BorderRadius.circular(2),
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.border, borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
           if (thumbnail != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -1278,6 +1281,7 @@ class _VideoPreviewSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
+        ),
       ),
     );
   }

@@ -17,6 +17,9 @@ class ExpertModel {
   final String experience; // maps to `degree` for doctors
   final String about;
   final String? photoUrl;
+  /// The Firestore `card` field for doctors — determines which section they
+  /// belong to (e.g. "Mental Fitness", "Consult Doctor"). Empty for non-doctors.
+  final String card;
 
   const ExpertModel({
     required this.id,
@@ -26,6 +29,7 @@ class ExpertModel {
     required this.experience,
     required this.about,
     this.photoUrl,
+    this.card = '',
   });
 
   /// Creates an [ExpertModel] from a Firestore document in the "doctors"
@@ -52,6 +56,7 @@ class ExpertModel {
       experience: d['degree'] as String? ?? d['experience'] as String? ?? '',
       about: d['about'] as String? ?? '',
       photoUrl: d['photoUrl'] as String?,
+      card: (d['card'] as String? ?? '').trim(),
     );
   }
 

@@ -81,7 +81,7 @@ class ExpertService {
       }
     }
 
-    controller = StreamController<List<ExpertModel>>(
+    controller = StreamController<List<ExpertModel>>.broadcast(
       onListen: () {
         sub1 = s1.listen(
           (data) { latest1 = data; emit(); },
@@ -149,7 +149,11 @@ class ExpertService {
         : _combine(_doctorsStream(), _instructorsStream());
 
     return source.map((experts) => experts.where((expert) {
-          // specialties already normalised at parse time
+          if (expert.type == 'doctor') {
+            // Doctors: match only if their `card` field equals the category.
+            return expert.card.toLowerCase() == category.toLowerCase();
+          }
+          // Instructors / lawyers: keep existing keyword-based filtering.
           return keywords.any(
             (kw) => expert.specialties.any((s) => s.contains(kw)),
           );
@@ -200,12 +204,16 @@ class ExpertService {
     if (category.isNotEmpty) {
       return source.map((experts) {
         return experts.where((expert) {
+          if (expert.type == 'doctor') {
+            // Doctors: match only by `card` field.
+            return expert.card.toLowerCase() == category;
+          }
           if (expert.type == 'lawyer') {
             // Lawyers: courts + cities already merged into specialties
             return expert.specialties.isNotEmpty &&
                 expert.specialties.any((s) => s.contains(category));
           }
-          // Doctors + instructors: filter by specialties
+          // Instructors: filter by specialties
           return expert.specialties.any((s) => s.contains(category));
         }).toList();
       });
@@ -246,6 +254,9 @@ class ExpertService {
     if (category.isEmpty) return combined;
 
     return combined.where((expert) {
+      if (expert.type == 'doctor') {
+        return expert.card.toLowerCase() == category;
+      }
       final tags = _normalize(expert.specialties);
       return tags.any((s) => s.contains(category));
     }).toList();

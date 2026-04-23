@@ -66,6 +66,11 @@ class LocalStorageService {
   static bool get keepNotesGridView => _prefs.getBool('keep_notes_grid') ?? true;
   static Future<void> setKeepNotesGridView(bool value) => _prefs.setBool('keep_notes_grid', value);
 
+  // Selected pet (1–6, 0 = default penguin)
+  static int get selectedPetIndex => _prefs.getInt('selected_pet') ?? 0;
+  static Future<void> setSelectedPetIndex(int index) =>
+      _prefs.setInt('selected_pet', index);
+
   // Clear all
   static Future<void> clear() => _prefs.clear();
 }

@@ -28,11 +28,17 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: SafeArea(
+        top: false,    // each screen handles top via AppBar or SafeArea
+        bottom: false, // Scaffold.bottomNavigationBar handles bottom inset
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
           boxShadow: [
@@ -83,6 +89,7 @@ class _MainShellState extends State<MainShell> {
               label: 'Profile',
             ),
           ],
+        ),
         ),
       ),
     );

@@ -853,11 +853,13 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
   void _showLongPressMenu(TodoItem note) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return SafeArea(
+          top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
@@ -914,11 +916,13 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
   void _showColorPicker(TodoItem note) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return SafeArea(
+          top: false,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -996,6 +1000,7 @@ class _TodoScreenState extends State<TodoScreen> with TickerProviderStateMixin {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

@@ -37,10 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
   VideoPlayerController? _penguinController;
   int _notificationCount = 0;
   StreamSubscription<QuerySnapshot>? _notificationSub;
+  int _selectedPetIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _selectedPetIndex = LocalStorageService.selectedPetIndex;
     DailyHealthTipService.getDailyTip().then((data) {
       if (mounted) setState(() => _dailyTip = data);
     });
@@ -68,6 +70,88 @@ class _HomeScreenState extends State<HomeScreen> {
     _penguinController?.dispose();
     _notificationSub?.cancel();
     super.dispose();
+  }
+
+  void _showPetOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.pets_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              title: const Text('Change Pet'),
+              subtitle: const Text('Choose a new companion'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final result = await Navigator.pushNamed(
+                    context, AppRoutes.petSelection);
+                if (result is int && mounted) {
+                  setState(() => _selectedPetIndex = result);
+                }
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.calendar_today_rounded,
+                    color: AppColors.textMuted, size: 20),
+              ),
+              title: const Text('Cycle Tracker'),
+              subtitle: const Text('View your cycle summary'),
+              onTap: () {
+                Navigator.pop(ctx);
+                // Delay until bottom-sheet dismiss animation completes,
+                // then open drawer (if cycle data exists) or navigate.
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (!mounted) return;
+                  if (_getCycleInfo() != null) {
+                    _scaffoldKey.currentState?.openDrawer();
+                  } else {
+                    Navigator.pushNamed(context, AppRoutes.cycleTracker);
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+        ),
+      ),
+    );
   }
 
   CyclePhaseInfo? _getCycleInfo() {
@@ -245,6 +329,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -256,9 +342,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                // Penguin icon — opens Cycle Tracker drawer
+                // Pet icon — tap to change pet or open cycle tracker
                 GestureDetector(
-                  onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                  onTap: _showPetOptions,
                   child: Container(
                     width: 50,
                     height: 50,
@@ -266,22 +352,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.transparent,
                       shape: BoxShape.circle,
                     ),
-                    child: ClipOval(
-                      child: _penguinController != null &&
-                              _penguinController!.value.isInitialized
-                          ? FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _penguinController!.value.size.width,
-                                height: _penguinController!.value.size.height,
-                                child: VideoPlayer(_penguinController!),
-                              ),
+                    child: _selectedPetIndex > 0
+                          ? Image.asset(
+                              'assets/images/pet$_selectedPetIndex.png',
+                              fit: BoxFit.contain,
                             )
-                          : Image.asset(
-                              'assets/images/penguin.gif',
-                              fit: BoxFit.cover,
-                            ),
-                    ),
+                          : (_penguinController != null &&
+                                  _penguinController!.value.isInitialized
+                              ? ClipOval(
+                                  child: FittedBox(
+                                    fit: BoxFit.cover,
+                                    child: SizedBox(
+                                      width:
+                                          _penguinController!.value.size.width,
+                                      height:
+                                          _penguinController!.value.size.height,
+                                      child: VideoPlayer(_penguinController!),
+                                    ),
+                                  ),
+                                )
+                              : Image.asset(
+                                  'assets/images/pet1.png',
+                                  fit: BoxFit.contain,
+                                )),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -438,12 +531,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Penguin mascot — bottom right
+            // Pet mascot — bottom right
             Positioned(
               right: 4,
               bottom: 4,
               child: Image.asset(
-                'assets/images/penguin.png',
+                _selectedPetIndex > 0
+                    ? 'assets/images/pet$_selectedPetIndex.png'
+                    : 'assets/images/pet1.png',
                 width: 90,
                 height: 90,
                 fit: BoxFit.contain,
@@ -470,11 +565,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 // Hero content
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 104, 24),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         _heroTitle(cycleInfo),
+                        textAlign: TextAlign.center,
                         style: AppTextStyles.subtitle2.copyWith(
                           color: AppColors.textBody,
                         ),
@@ -491,6 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 6),
                       Text(
                         _heroSubtitle(cycleInfo),
+                        textAlign: TextAlign.center,
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -679,11 +777,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
+    final isTablet = MediaQuery.of(context).size.width > 600;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isTablet ? 3 : 2,
         crossAxisSpacing: AppSpacing.componentGap,
         mainAxisSpacing: AppSpacing.componentGap,
         childAspectRatio: 1.05,
@@ -733,8 +832,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
         crossAxisSpacing: AppSpacing.componentGap,
         mainAxisSpacing: AppSpacing.componentGap,
         childAspectRatio: 1.05,

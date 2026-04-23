@@ -1,27 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/emergency_contact_service.dart';
 import '../../../core/services/whatsapp_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/app_spacing.dart';
 import '../../../core/utils/cycle_phase_calculator.dart';
 import '../../../core/services/local_storage_service.dart';
+import '../../../data/models/emergency_contact_model.dart';
 import '../../widgets/common/naarya_card.dart';
 import '../../widgets/common/section_header.dart';
-
-class _EmergencyContact {
-  final String name;
-  final String phone;
-  final String relation;
-
-  const _EmergencyContact({
-    required this.name,
-    required this.phone,
-    required this.relation,
-  });
-}
+import '../../../core/routes/app_routes.dart';
 
 class SafetyScreen extends StatefulWidget {
   const SafetyScreen({super.key});
@@ -36,19 +29,10 @@ class _SafetyScreenState extends State<SafetyScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // Trusted contacts
-  final List<_EmergencyContact> _contacts = [
-    const _EmergencyContact(
-      name: 'Mom',
-      phone: '+919876543210',
-      relation: 'Family',
-    ),
-    const _EmergencyContact(
-      name: 'Best Friend',
-      phone: '+919123456789',
-      relation: 'Friend',
-    ),
-  ];
+  // Trusted contacts — populated from Firebase
+  List<EmergencyContact> _contacts = [];
+  StreamSubscription<List<EmergencyContact>>? _contactsSubscription;
+  bool _contactsLoading = true;
   static const int _maxContacts = 5;
 
   // Add contact form
@@ -68,6 +52,9 @@ class _SafetyScreenState extends State<SafetyScreen>
   Timer? _fakeCallTimer;
   int _fakeCallSecondsLeft = 0;
   bool _fakeCallScheduled = false;
+  final _customMinutesController = TextEditingController();
+  final _customSecondsController = TextEditingController();
+  String? _customMinutesError;
 
   // Cycle phase
   CyclePhaseInfo? _cyclePhaseInfo;
@@ -83,6 +70,19 @@ class _SafetyScreenState extends State<SafetyScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _loadCyclePhase();
+    _contactsSubscription = EmergencyContactService.watchContacts().listen(
+      (contacts) {
+        if (mounted) {
+          setState(() {
+            _contacts = contacts;
+            _contactsLoading = false;
+          });
+        }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _contactsLoading = false);
+      },
+    );
   }
 
   void _loadCyclePhase() {
@@ -106,13 +106,71 @@ class _SafetyScreenState extends State<SafetyScreen>
     _pulseController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
+    _customMinutesController.dispose();
+    _customSecondsController.dispose();
     _fakeCallTimer?.cancel();
+    _contactsSubscription?.cancel();
     super.dispose();
   }
 
   // ─── SOS ───────────────────────────────────────────────────────────────
 
+  void _showAlert(String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        ),
+        content: Text(message, style: AppTextStyles.body1),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _triggerSOSCall() async {
+    if (_contacts.isEmpty) {
+      _showAlert('Please add at least one emergency contact');
+      return;
+    }
+
+    final phone = _contacts.first.phone.trim();
+    if (phone.isEmpty) {
+      _showAlert('Invalid contact number');
+      return;
+    }
+
+    // Request CALL_PHONE permission
+    final status = await Permission.phone.request();
+
+    if (status.isGranted) {
+      // Direct call — ACTION_CALL (no dialer UI)
+      final called = await FlutterPhoneDirectCaller.callNumber(phone);
+      if (called != true) {
+        // Fallback: open dialer pre-filled
+        final uri = Uri(scheme: 'tel', path: phone);
+        if (await canLaunchUrl(uri)) await launchUrl(uri);
+      }
+    } else if (status.isPermanentlyDenied) {
+      _showAlert('Call permission required for SOS feature. Please enable it in Settings.');
+      await openAppSettings();
+    } else {
+      _showAlert('Call permission required for SOS feature');
+    }
+  }
+
   void _showSOSConfirmation() {
+    if (_contacts.isEmpty) {
+      _showAlert('Please add at least one emergency contact');
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -127,7 +185,7 @@ class _SafetyScreenState extends State<SafetyScreen>
           ],
         ),
         content: Text(
-          'Send SOS alert to all emergency contacts?',
+          'Call ${_contacts.first.name} (${_contacts.first.phone}) immediately?',
           style: AppTextStyles.body1,
         ),
         actions: [
@@ -149,20 +207,9 @@ class _SafetyScreenState extends State<SafetyScreen>
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'SOS alert sent to ${_contacts.length} contacts',
-                  ),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.sm),
-                  ),
-                ),
-              );
+              _triggerSOSCall();
             },
-            child: Text('SEND SOS', style: AppTextStyles.button),
+            child: Text('CALL NOW', style: AppTextStyles.button),
           ),
         ],
       ),
@@ -249,19 +296,22 @@ class _SafetyScreenState extends State<SafetyScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 24,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              ),
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 24,
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,25 +411,35 @@ class _SafetyScreenState extends State<SafetyScreen>
                               BorderRadius.circular(AppSpacing.buttonRadius),
                         ),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         final name = _nameController.text.trim();
                         final phone = _phoneController.text.trim();
                         if (name.isEmpty || phone.isEmpty) return;
-                        setState(() {
-                          _contacts.add(_EmergencyContact(
+                        Navigator.pop(ctx);
+                        try {
+                          await EmergencyContactService.addContact(
                             name: name,
                             phone: phone,
                             relation: _selectedRelation,
-                          ));
-                        });
-                        Navigator.pop(ctx);
+                          );
+                        } catch (_) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to save contact. Please try again.'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
                       },
                       child: Text('Save Contact', style: AppTextStyles.button),
                     ),
                   ),
                 ],
               ),
-            );
+            ),
+          );
           },
         );
       },
@@ -395,88 +455,115 @@ class _SafetyScreenState extends State<SafetyScreen>
           actionText: '${_contacts.length}/$_maxContacts contacts',
         ),
         const SizedBox(height: AppSpacing.md),
-        ..._contacts.asMap().entries.map((entry) {
-          final index = entry.key;
-          final contact = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: NaaryaCard(
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: AppColors.primaryLight,
-                    child: Text(
-                      contact.name[0].toUpperCase(),
-                      style: AppTextStyles.subtitle1.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+        if (_contactsLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_contacts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'No emergency contacts added',
+              style: AppTextStyles.body2,
+            ),
+          )
+        else
+          ..._contacts.map((contact) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: NaaryaCard(
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: AppColors.primaryLight,
+                      child: Text(
+                        contact.name[0].toUpperCase(),
+                        style: AppTextStyles.subtitle1.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(contact.name,
-                                style: AppTextStyles.subtitle1),
-                            const SizedBox(width: AppSpacing.sm),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(contact.name,
+                                    style: AppTextStyles.subtitle1,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondaryLight,
-                                borderRadius: BorderRadius.circular(
-                                  AppSpacing.chipRadius,
+                              const SizedBox(width: AppSpacing.sm),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondaryLight,
+                                  borderRadius: BorderRadius.circular(
+                                    AppSpacing.chipRadius,
+                                  ),
+                                ),
+                                child: Text(
+                                  contact.relation,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.primaryDark,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                contact.relation,
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.primaryDark,
-                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(contact.phone, style: AppTextStyles.caption),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        final uri = Uri(scheme: 'tel', path: contact.phone);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri);
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.call,
+                        color: AppColors.success,
+                        size: 22,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        try {
+                          await EmergencyContactService.deleteContact(contact.id);
+                        } catch (_) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to delete contact.'),
+                                behavior: SnackBarBehavior.floating,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(contact.phone, style: AppTextStyles.caption),
-                      ],
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: AppColors.textMuted,
+                        size: 22,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () async {
-                      final uri = Uri(scheme: 'tel', path: contact.phone);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.call,
-                      color: AppColors.success,
-                      size: 22,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() => _contacts.removeAt(index));
-                    },
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: AppColors.textMuted,
-                      size: 22,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
         if (_contacts.length < _maxContacts) ...[
           const SizedBox(height: AppSpacing.sm),
           SizedBox(
@@ -503,11 +590,60 @@ class _SafetyScreenState extends State<SafetyScreen>
   // ─── Fake Call ─────────────────────────────────────────────────────────
 
   void _scheduleFakeCall() {
-    if (_selectedFakeCallMinutes == null) return;
+    int totalSeconds;
+    final minText = _customMinutesController.text.trim();
+    final secText = _customSecondsController.text.trim();
+
+    if (minText.isNotEmpty || secText.isNotEmpty) {
+      // Custom input takes priority over preset
+      final mins = minText.isEmpty ? 0 : int.tryParse(minText);
+      final secs = secText.isEmpty ? 0 : int.tryParse(secText);
+
+      if (mins == null || secs == null ||
+          mins < 0 || mins > 120 ||
+          secs < 0 || secs > 59) {
+        setState(() => _customMinutesError = 'Enter valid time');
+        return;
+      }
+
+      final total = mins * 60 + secs;
+      if (total <= 0) {
+        setState(() => _customMinutesError = 'Enter valid time');
+        return;
+      }
+
+      totalSeconds = total;
+    } else if (_selectedFakeCallMinutes != null) {
+      totalSeconds = _selectedFakeCallMinutes! * 60;
+    } else {
+      return;
+    }
+
+    final displayMins = totalSeconds ~/ 60;
+    final displaySecs = totalSeconds % 60;
+    final confirmMsg = displayMins == 0
+        ? 'Fake call scheduled in ${displaySecs}s'
+        : displaySecs == 0
+            ? 'Fake call scheduled in ${displayMins}m'
+            : 'Fake call scheduled in ${displayMins}m ${displaySecs}s';
+
     setState(() {
+      _customMinutesError = null;
       _fakeCallScheduled = true;
-      _fakeCallSecondsLeft = _selectedFakeCallMinutes! * 60;
+      _fakeCallSecondsLeft = totalSeconds;
     });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(confirmMsg),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.sm),
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
     _fakeCallTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -525,10 +661,13 @@ class _SafetyScreenState extends State<SafetyScreen>
 
   void _cancelFakeCall() {
     _fakeCallTimer?.cancel();
+    _customMinutesController.clear();
+    _customSecondsController.clear();
     setState(() {
       _fakeCallScheduled = false;
       _fakeCallSecondsLeft = 0;
       _selectedFakeCallMinutes = null;
+      _customMinutesError = null;
     });
   }
 
@@ -664,11 +803,94 @@ class _SafetyScreenState extends State<SafetyScreen>
                   onSelected: (val) {
                     setState(() {
                       _selectedFakeCallMinutes = val ? min : null;
+                      _customMinutesError = null;
                     });
                   },
                 );
               }).toList(),
             ),
+            const SizedBox(height: AppSpacing.md),
+            // Custom timer input
+            Text('Set Custom Time', style: AppTextStyles.subtitle2),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customMinutesController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'min',
+                      hintStyle: AppTextStyles.body2.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.buttonRadius),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.buttonRadius),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    onChanged: (_) =>
+                        setState(() => _customMinutesError = null),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  child: Text(':', style: AppTextStyles.h2),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _customSecondsController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'sec',
+                      hintStyle: AppTextStyles.body2.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.buttonRadius),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.buttonRadius),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    onChanged: (_) =>
+                        setState(() => _customMinutesError = null),
+                  ),
+                ),
+              ],
+            ),
+            if (_customMinutesError != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _customMinutesError!,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
@@ -681,8 +903,11 @@ class _SafetyScreenState extends State<SafetyScreen>
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                onPressed:
-                    _selectedFakeCallMinutes != null ? _scheduleFakeCall : null,
+                onPressed: (_selectedFakeCallMinutes != null ||
+                        _customMinutesController.text.trim().isNotEmpty ||
+                        _customSecondsController.text.trim().isNotEmpty)
+                    ? _scheduleFakeCall
+                    : null,
                 child: Text('Schedule Call', style: AppTextStyles.button),
               ),
             ),
@@ -992,6 +1217,25 @@ class _SafetyScreenState extends State<SafetyScreen>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildSOSSection(),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppSpacing.buttonRadius),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.legalHelp),
+                icon: const Icon(Icons.gavel_rounded, size: 20),
+                label: Text('Legal Help', style: AppTextStyles.button),
+              ),
+            ),
             SizedBox(height: AppSpacing.sectionGap),
             _buildTrustedContactsSection(),
             SizedBox(height: AppSpacing.sectionGap),

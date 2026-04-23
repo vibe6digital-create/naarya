@@ -99,6 +99,7 @@ class _NaturopathyScreenState extends State<NaturopathyScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useSafeArea: true,
       builder: (ctx) => _VideoPreviewSheet(
         video: video,
         onWatch: () {
@@ -283,7 +284,7 @@ class _NaturopathyScreenState extends State<NaturopathyScreen> {
         }
 
         return SizedBox(
-          height: 168,
+          height: 182,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
@@ -1015,7 +1016,10 @@ class _InfoBlock extends StatelessWidget {
                   child: Icon(icon, color: iconColor, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Text(title, style: AppTextStyles.subtitle1.copyWith(color: iconColor, fontWeight: FontWeight.w700)),
+                Flexible(
+                  child: Text(title, style: AppTextStyles.subtitle1.copyWith(color: iconColor, fontWeight: FontWeight.w700),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
               ],
             ),
           ),
@@ -1240,23 +1244,25 @@ class _VideoPreviewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final thumbnail = video.resolvedThumbnail;
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40, height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              ),
             ),
-          ),
           if (thumbnail != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -1286,6 +1292,7 @@ class _VideoPreviewSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
+        ),
       ),
     );
   }

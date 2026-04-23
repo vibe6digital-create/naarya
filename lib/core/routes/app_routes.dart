@@ -55,4 +55,6 @@ class AppRoutes {
   static const String naturopathy = '/naturopathy';
   static const String notifications = '/notifications';
   static const String safeSpace = '/safe-space';
+  static const String petSelection = '/pet-selection';
+  static const String petUpgrade = '/pet-upgrade';
 }

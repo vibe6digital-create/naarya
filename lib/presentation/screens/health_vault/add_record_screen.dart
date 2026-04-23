@@ -93,9 +93,11 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
   void _showImageSourceSheet() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
+        top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: Column(

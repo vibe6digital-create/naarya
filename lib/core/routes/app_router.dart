@@ -35,6 +35,8 @@ import '../../presentation/screens/consultation/consult_hub_screen.dart';
 import '../../presentation/screens/naturopathy/naturopathy_screen.dart';
 import '../../presentation/screens/safe_space/safe_space_screen.dart';
 import '../constants/asset_paths.dart';
+import '../../presentation/screens/pet/pet_selection_screen.dart';
+import '../../presentation/screens/pet/pet_upgrade_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -150,6 +152,10 @@ class AppRouter {
         return _buildRoute(const NaturopathyScreen());
       case AppRoutes.safeSpace:
         return _buildRoute(const SafeSpaceScreen());
+      case AppRoutes.petSelection:
+        return _buildRoute(const PetSelectionScreen());
+      case AppRoutes.petUpgrade:
+        return _buildRoute(const PetUpgradeScreen());
       default:
         return _buildRoute(
           const Scaffold(body: Center(child: Text('Page not found'))),
@@ -158,6 +164,15 @@ class AppRouter {
   }
 
   static MaterialPageRoute _buildRoute(Widget page, {RouteSettings? settings}) {
-    return MaterialPageRoute(builder: (_) => page, settings: settings);
+    return MaterialPageRoute(
+      builder: (_) => SafeArea(
+        top: false,   // AppBar / screen-level SafeArea handles status bar
+        bottom: true, // Prevent scrollable content from hiding under gesture bar
+        left: true,   // Cover landscape and edge-to-edge devices
+        right: true,
+        child: page,
+      ),
+      settings: settings,
+    );
   }
 }

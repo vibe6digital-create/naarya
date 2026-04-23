@@ -164,30 +164,33 @@ class _CommunityScreenState extends State<CommunityScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.border, borderRadius: BorderRadius.circular(2),
+        builder: (ctx, setSheetState) => SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.border, borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              Text('Comments', style: AppTextStyles.h3),
+                Text('Comments', style: AppTextStyles.h3),
               const SizedBox(height: 12),
               if (_storyComments[storyIndex].isEmpty)
                 Padding(
@@ -266,6 +269,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -308,6 +312,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -317,10 +322,12 @@ class _CommunityScreenState extends State<CommunityScreen>
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: AppSpacing.pagePadding,
-          child: Column(
+        builder: (context, scrollController) => SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: AppSpacing.pagePadding,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
@@ -344,7 +351,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                         color: _categoryColor(post.category), fontWeight: FontWeight.w600)),
               ),
               const SizedBox(height: AppSpacing.md),
-              Text(post.title, style: AppTextStyles.h2),
+              Text(post.title, style: AppTextStyles.h2,
+                  maxLines: 3, overflow: TextOverflow.ellipsis),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
@@ -374,6 +382,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               const SizedBox(height: AppSpacing.xxl),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -384,27 +393,30 @@ class _CommunityScreenState extends State<CommunityScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 20, right: 20, top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                    color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+      builder: (context) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20, right: 20, top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                      color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                ),
               ),
-            ),
             Text('Share Your Story', style: AppTextStyles.h3),
             const SizedBox(height: 4),
             Text('Your experience helps other women. Post anonymously.',
@@ -454,6 +466,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -463,27 +476,30 @@ class _CommunityScreenState extends State<CommunityScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 20, right: 20, top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                    color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+      builder: (context) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20, right: 20, top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                      color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                ),
               ),
-            ),
             Text('Ask a Question', style: AppTextStyles.h3),
             const SizedBox(height: 4),
             Text('Reviewed by our panel of experts.',
@@ -534,6 +550,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -681,7 +698,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               : ListView.separated(
                   padding: AppSpacing.pagePadding,
                   itemCount: filteredPosts.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.componentGap),
                   itemBuilder: (context, index) {
                     final post = filteredPosts[index];
@@ -711,9 +728,13 @@ class _CommunityScreenState extends State<CommunityScreen>
                                     Text(post.authorName,
                                         style: AppTextStyles.subtitle2.copyWith(
                                             color: AppColors.textDark,
-                                            fontWeight: FontWeight.w600)),
+                                            fontWeight: FontWeight.w600),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
                                     Text(AppDateUtils.timeAgo(post.timestamp),
-                                        style: AppTextStyles.caption),
+                                        style: AppTextStyles.caption,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
                                   ],
                                 ),
                               ),
@@ -736,11 +757,15 @@ class _CommunityScreenState extends State<CommunityScreen>
                           const SizedBox(height: AppSpacing.md),
                           Text(post.title,
                               style: AppTextStyles.subtitle1
-                                  .copyWith(fontWeight: FontWeight.w600)),
+                                  .copyWith(fontWeight: FontWeight.w600),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis),
                           const SizedBox(height: AppSpacing.xs),
                           Text(excerpt,
                               style: AppTextStyles.body2
-                                  .copyWith(color: AppColors.textMuted)),
+                                  .copyWith(color: AppColors.textMuted),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis),
                           const SizedBox(height: AppSpacing.md),
                           Row(
                             children: [
@@ -772,7 +797,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     return ListView.separated(
       padding: AppSpacing.pagePadding,
       itemCount: _userStories.length,
-      separatorBuilder: (_, __) =>
+      separatorBuilder: (_, _) =>
           const SizedBox(height: AppSpacing.componentGap),
       itemBuilder: (context, index) {
         final story = _userStories[index];

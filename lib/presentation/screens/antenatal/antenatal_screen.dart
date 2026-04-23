@@ -70,6 +70,12 @@ class _AntenatalScreenState extends State<AntenatalScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: AppSpacing.md),
+          _buildConsultCTA(
+            'Talk to Our Garbh Sanskar Expert',
+            'Connect via WhatsApp for personalised guidance',
+          ),
+          const SizedBox(height: AppSpacing.sectionGap),
+
           _buildHeroBanner(
             title: 'Garbh Sanskar',
             subtitle: 'Nurture your baby before birth through music, meditation & positive thought',
@@ -104,10 +110,6 @@ class _AntenatalScreenState extends State<AntenatalScreen>
           )),
           const SizedBox(height: AppSpacing.sectionGap),
 
-          _buildConsultCTA(
-            'Talk to Our Garbh Sanskar Expert',
-            'Connect via WhatsApp for personalised guidance',
-          ),
           const SizedBox(height: AppSpacing.lg),
         ],
       ),
@@ -121,6 +123,12 @@ class _AntenatalScreenState extends State<AntenatalScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: AppSpacing.md),
+          _buildConsultCTA(
+            'Book an Antenatal Consultation',
+            'Speak to our gynaecologist or midwife today',
+          ),
+          const SizedBox(height: AppSpacing.sectionGap),
+
           _buildHeroBanner(
             title: 'Antenatal Classes',
             subtitle: 'Prepare for birth with expert-led classes for mother & partner',
@@ -165,10 +173,6 @@ class _AntenatalScreenState extends State<AntenatalScreen>
           )),
           const SizedBox(height: AppSpacing.sectionGap),
 
-          _buildConsultCTA(
-            'Book an Antenatal Consultation',
-            'Speak to our gynaecologist or midwife today',
-          ),
           const SizedBox(height: AppSpacing.lg),
         ],
       ),
@@ -282,10 +286,14 @@ class _AntenatalScreenState extends State<AntenatalScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              Text(cls.title,
-                  style: AppTextStyles.subtitle2.copyWith(
-                      fontWeight: FontWeight.w600, color: AppColors.textDark)),
-              const Spacer(),
+              Expanded(
+                child: Text(cls.title,
+                    style: AppTextStyles.subtitle2.copyWith(
+                        fontWeight: FontWeight.w600, color: AppColors.textDark),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
               Text(cls.week,
                   style: AppTextStyles.caption.copyWith(
                       color: AppColors.primary, fontWeight: FontWeight.w600)),

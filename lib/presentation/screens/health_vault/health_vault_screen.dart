@@ -180,6 +180,7 @@ class _HealthVaultScreenState extends State<HealthVaultScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -198,16 +199,18 @@ class _HealthVaultScreenState extends State<HealthVaultScreen> {
     final catColor = _colorForType(record.type);
     final h = record.healthDetails;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // Drag handle
-          Container(
-            margin: const EdgeInsets.only(top: 10),
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.only(top: 10),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
@@ -386,7 +389,8 @@ class _HealthVaultScreenState extends State<HealthVaultScreen> {
               ],
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -411,8 +415,8 @@ class _HealthVaultScreenState extends State<HealthVaultScreen> {
         children: [
           Icon(icon, size: 16, color: AppColors.textMuted),
           const SizedBox(width: 10),
-          SizedBox(
-            width: 90,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 90),
             child: Text(label,
                 style: AppTextStyles.caption
                     .copyWith(color: AppColors.textMuted)),
@@ -484,10 +488,12 @@ class _HealthVaultScreenState extends State<HealthVaultScreen> {
   void _showShareSheet(MedicalRecord record) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
+        top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Column(
